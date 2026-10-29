@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     google_client_secret: str = ""
     google_redirect_uri: str = "http://localhost:8080/"
     gmail_token_path: str = ".secrets/gmail-token.json"
-    gmail_query: str = 'in:inbox newer_than:30d {complaint refund damaged late "not received" "wrong item"}'
+    gmail_query: str = 'in:inbox newer_than:30d {complaint issue problem refund return replacement damaged broken defective missing lost "not received" late delayed wrong incorrect overcharged "khiếu nại" "phàn nàn" "vấn đề" "hoàn tiền" "đổi trả" "thay thế" "hư hỏng" "thất lạc" "chưa nhận" "giao trễ" "giao sai" "tính phí sai"}'
     gmail_batch_size: int = Field(default=25, ge=1, le=100)
     gmail_retry_failed: bool = True
     gemini_timeout_seconds: int = Field(default=30, ge=5, le=120)

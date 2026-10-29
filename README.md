@@ -81,9 +81,9 @@ Seeding is safe to repeat and preserves existing orders:
 
 | Order | Customer | Expected | Actual | Shipping fee |
 | --- | --- | --- | --- | --- |
-| DH001 | dh001@example.com | 2026-10-25 | 2026-10-27 | 40,000 VND |
-| DH002 | dh002@example.com | 2026-10-25 | 2026-10-25 | 20,000 VND |
-| DH003 | dh003@example.com | 2026-10-29 | Not delivered | 30,000 VND |
+| DH001 | hang290806@gmail.com | 2026-10-25 | 2026-10-27 | 40,000 VND |
+| DH002 | phannhungoc2k@gmail.com | 2026-10-25 | 2026-10-25 | 20,000 VND |
+| DH003 | donchick24@gmail.com | 2026-10-29 | Not delivered | 30,000 VND |
 
 Dates and delivery status come exclusively from PostgreSQL. A delivered late order with a shipping-fee refund request is eligible **for staff review**, subject to sender matching. On-time delivery does not qualify under this sample policy. Missing dates/identifiers, unconfirmed delivery, unsupported requests, or sender mismatch require information/review. Unknown identifiers return `order_not_found`.
 
@@ -139,7 +139,7 @@ Manual bounded sync, one Gmail account, one process, local token file, simple co
 
 ## Current local test mode
 
-The local backend `.env` is configured for at most **10 matching emails per sync**, using `in:inbox newer_than:7d subject:"CLAIMPILOT TEST"`. Send test emails with `[CLAIMPILOT TEST]` in their subject. Gmail search matches that phrase; it does not require it to be the first characters. The three previously failed emails remain stored but are not retried outside this query (`GMAIL_RETRY_FAILED=false`).
+The local backend `.env` is configured for at most **10 matching emails per sync**. It searches inbox messages from the last 30 days for broad complaint intent in English or Vietnamese: generic problems, refunds/returns, replacements, damaged items, missing deliveries, delays, wrong items, and incorrect charges. Gmail only performs intake matching; the AI then classifies each saved message as Late Delivery, Not Received, Damaged Item, Wrong Item, Refund Request, or Other. Test subjects no longer need the `[CLAIMPILOT TEST]` prefix. Because keyword search is not semantic classification, tune the query or use a dedicated Gmail label when false positives matter (`GMAIL_RETRY_FAILED=false`).
 
 `GEMINI_TIMEOUT_SECONDS=30` bounds each provider request, and automatic SDK retries are disabled. A provider-wide Gemini failure stops the batch early; the `deferred` count means those messages were not attempted and remain available for a later sync. This reduces waiting during an outage; it cannot guarantee successful or instant AI processing. Set `GMAIL_RETRY_FAILED=true` and broaden `GMAIL_QUERY` when ready to leave test mode, then restart FastAPI.
 
