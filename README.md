@@ -1,165 +1,141 @@
 # ClaimPilot
 
-A local staff workspace for the first 30% milestone: Gmail → Gemini → PostgreSQL order verification → deterministic policy assessment → React dashboard. Gmail is the sole intake channel. The app never sends replies, approves refunds, or performs transactions.
+ClaimPilot là ứng dụng nội bộ đọc email khiếu nại từ Gmail, dùng AI để trích xuất thông tin, đối chiếu đơn hàng trong PostgreSQL và đề xuất kết quả để nhân viên xem xét.
 
-## Architecture
+> Ứng dụng không tự gửi email, hoàn tiền hoặc thực hiện giao dịch.
 
-- `backend/app`: FastAPI routes and Pydantic contracts; SQLAlchemy models; Gmail, Gemini, synchronization, and policy services.
-- `backend/migrations`: versioned Alembic schema. `backend/scripts`: Gmail authorization and repeatable fictional order seeding.
-- `frontend/src`: React/TypeScript dashboard, filters, pagination, and complaint detail drawer. Email content is rendered as escaped text.
-- PostgreSQL 17 runs through Compose with persistent storage and a loopback-only port.
+## Yêu cầu
 
-The original email is committed before AI processing. A unique Gmail message ID prevents duplicates, including concurrent insertion attempts. Failed analyses stay visible as `processing_failed`. With `GMAIL_RETRY_FAILED=true`, saved failures are retried even outside the current query; with `false`, only failures matching the current query can be retried. Malformed/unreadable Gmail messages are reported individually without aborting the batch. An unreadable message cannot become a complaint until it can be parsed.
+- Python 3.11+
+- Node.js 22+
+- Docker và Docker Compose
+- Google Cloud OAuth Client loại **Desktop app**
+- Gemini API key
 
-AI output is validated and is never used as proof of order existence or delivery. The detail API and UI distinguish extracted identifiers from the linked database order. A sender/customer email mismatch requires staff verification. Order details are read from the linked database row; verification status and policy assessments capture the last processing run. Later database changes do not automatically reprocess a successful case and can leave its assessment out of date.
+## 1. Cấu hình
 
-## Prerequisites
-
-Python 3.11+ (verified here with 3.14), Node 22.12+, npm, and Docker with Compose. On macOS with Colima, start it using `colima start`. Either `docker compose` or the standalone `docker-compose` command works; the examples below use the latter.
-
-## Local setup
-
-From the repository root:
+Từ thư mục gốc:
 
 ```sh
 cp .env.example .env
 cp backend/.env.example backend/.env
 ```
 
-Choose a local PostgreSQL password. Set `POSTGRES_PASSWORD` in root `.env` and the same password in backend `DATABASE_URL` (URL-encode reserved characters). Local environment files and OAuth tokens are ignored by Git. If these files were already generated during development, preserve them rather than copying over them.
+Cập nhật:
+
+- `POSTGRES_PASSWORD` trong `.env`.
+- `DATABASE_URL` trong `backend/.env` với cùng mật khẩu.
+- `GOOGLE_CLIENT_ID` và `GOOGLE_CLIENT_SECRET`.
+- `GEMINI_API_KEY` và model Gemini khả dụng với tài khoản.
+- `AI_PROVIDER=gemini`.
+
+Không commit `.env`, API key hoặc `backend/.secrets/` lên Git.
+
+## 2. Khởi tạo database và backend
 
 ```sh
 docker-compose up -d db
 python3 -m venv backend/.venv
 backend/.venv/bin/pip install -r backend/requirements.txt
+
 cd backend
 .venv/bin/alembic upgrade head
 .venv/bin/python -m scripts.seed_data
 .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
-In another terminal, from the repository root:
+Nếu máy dùng Docker Compose plugin, thay `docker-compose` bằng `docker compose`.
+
+API docs: http://127.0.0.1:8000/docs
+
+## 3. Cấp quyền đọc Gmail
+
+Trong Google Cloud:
+
+1. Bật Gmail API.
+2. Cấu hình OAuth consent screen và thêm tài khoản test user.
+3. Tạo OAuth Client loại **Desktop app**.
+4. Dùng scope `https://www.googleapis.com/auth/gmail.readonly`.
+5. Giữ callback mặc định `http://localhost:8080/`.
+
+Chạy lệnh sau trong `backend/`:
+
+```sh
+.venv/bin/python -m scripts.authorize_gmail
+```
+
+Chọn tài khoản Gmail cần đọc. Token được lưu cục bộ tại `backend/.secrets/gmail-token.json`.
+
+## 4. Chạy frontend
+
+Mở terminal khác tại thư mục gốc:
 
 ```sh
 npm --prefix frontend ci
 npm --prefix frontend run dev
 ```
 
-Open **http://localhost:5173**. API docs: **http://127.0.0.1:8000/docs**. Vite proxies `/api` to FastAPI. For a separate frontend host, set `VITE_API_BASE_URL` in `frontend/.env` and set the exact `FRONTEND_ORIGIN` in `backend/.env`; restart both servers. Backend settings resolve `.env` relative to `backend/`, independent of shell location.
+Mở http://localhost:5173.
 
-Stop the servers with Ctrl-C; stop PostgreSQL with `docker-compose stop db`. Do not remove the database volume unless you intend to erase stored cases.
+## 5. Sử dụng
 
-## Google Cloud and Gmail OAuth
+1. Gửi email khiếu nại vào Gmail đã cấp quyền.
+2. Email nên chứa mã đơn như `DH001`, `DH002` hoặc `DH003`.
+3. Mở dashboard và bấm **Sync Emails**.
+4. Chọn complaint để xem email gốc, phân tích AI, đơn hàng xác minh và kết quả chính sách.
+5. Nếu AI lỗi, mở complaint và bấm **Retry Gemini analysis**.
 
-1. Create/select a controlled Google Cloud project and enable **Gmail API**.
-2. Configure Google Auth Platform branding, audience, and data access. For external testing, add the designated Gmail test account as a test user. Add the read-only scope `https://www.googleapis.com/auth/gmail.readonly`.
-3. Create an OAuth client of type **Desktop app**. Copy its client ID and secret to backend `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`; never commit downloaded credentials.
-4. Leave `GOOGLE_REDIRECT_URI=http://localhost:8080/` for the local loopback callback. This implementation uses installed-app authorization, not a web-server OAuth client.
-5. Run from `backend/`:
+Mỗi lần sync xử lý tối đa số thư trong `GMAIL_BATCH_SIZE`. `GMAIL_QUERY` lọc các ứng viên có dấu hiệu phàn nàn; AI tiếp tục xác định email có thực sự là complaint hay không rồi mới phân loại thành Late Delivery, Not Received, Damaged Item, Wrong Item, Refund Request hoặc Other. Thư quảng cáo và thư không liên quan được ghi nhận để tránh xử lý lặp lại nhưng không xuất hiện trên dashboard.
 
-```sh
-.venv/bin/python -m scripts.authorize_gmail
-```
+## Dữ liệu mẫu
 
-Authorize only the controlled Gmail account in the browser. The command saves a refresh token to `backend/.secrets/gmail-token.json` with owner-only permissions. The read-only scope allows reading and searching, not sending or modifying messages. Refresh happens on sync. If consent is revoked or the token expires, rerun the command; testing-mode refresh tokens may expire according to Google's OAuth rules.
+| Đơn hàng | Email khách hàng | Trạng thái |
+| --- | --- | --- |
+| DH001 | hang290806@gmail.com | Đã giao trễ |
+| DH002 | phannhungoc2k@gmail.com | Đã giao đúng hạn |
+| DH003 | donchick24@gmail.com | Chưa xác nhận giao |
 
-No account password or access token belongs in `.env`. The token file contains credentials and must remain private. Configuration status only checks presence of the token and API key; actual validity is checked during sync.
+Email người gửi phải trùng email khách hàng của đơn; nếu không, hệ thống yêu cầu nhân viên xác minh quyền sở hữu.
 
-Set `GMAIL_QUERY` to select likely complaints. Default: inbox messages within 30 days containing complaint/refund/damage/delay terms. Set `GMAIL_BATCH_SIZE` between 1 and 100 (the example configuration uses 10). Sync is manual and synchronous. When enabled, saved retries and new messages share one batch limit. The reader scans past already saved emails (up to 1,000 IDs per sync) to drain older matching messages without reanalyzing them. For larger inboxes, narrow the query by date. The default query is keyword-based, so staff should tune it for their test emails and language.
+## Chính sách mẫu
 
-## Gemini
+- Giao trễ và yêu cầu hoàn phí vận chuyển: `eligible_for_review`.
+- Giao đúng hạn: `not_eligible`.
+- Chưa giao, thiếu dữ liệu hoặc yêu cầu ngoài chính sách: `insufficient_information`.
+- Không tìm thấy mã đơn: `order_not_found`.
 
-Create a Gemini API key for the controlled project/account and set `GEMINI_API_KEY` in backend `.env`. Set `GEMINI_MODEL` to a model available to that account supporting structured output (example: `gemini-2.5-flash`). Restart FastAPI after changing configuration.
+Mọi kết quả đều cần nhân viên xem xét. Hệ thống không tự hoàn tiền.
 
-Subject and up to 60,000 body characters are sent to Gemini. Original email text stays in PostgreSQL. Only use fictional complaints and a controlled account for this milestone. Missing credentials, invalid output, quota errors, and provider failures are reported without fabricated analysis. Retry saved failures using Sync Emails after correcting setup.
-
-SDK references: [official Google Gen AI Python SDK](https://googleapis.github.io/python-genai/) and [Gmail Python message API](https://googleapis.github.io/google-api-python-client/docs/dyn/gmail_v1.users.messages.html).
-
-## Seed data and policies
-
-Seeding is safe to repeat and preserves existing orders:
-
-| Order | Customer | Expected | Actual | Shipping fee |
-| --- | --- | --- | --- | --- |
-| DH001 | hang290806@gmail.com | 2026-10-25 | 2026-10-27 | 40,000 VND |
-| DH002 | phannhungoc2k@gmail.com | 2026-10-25 | 2026-10-25 | 20,000 VND |
-| DH003 | donchick24@gmail.com | 2026-10-29 | Not delivered | 30,000 VND |
-
-Dates and delivery status come exclusively from PostgreSQL. A delivered late order with a shipping-fee refund request is eligible **for staff review**, subject to sender matching. On-time delivery does not qualify under this sample policy. Missing dates/identifiers, unconfirmed delivery, unsupported requests, or sender mismatch require information/review. Unknown identifiers return `order_not_found`.
-
-To demonstrate an eligible case with a real Gmail sender, intentionally update DH001's `customer_email` in your local test database to the controlled sender's address. Do not change real customer records. This also allows testing sender mismatches separately.
-
-Case statuses: successful assessments enter `pending_review`; insufficient information enters `insufficient_information`; provider/validation failures enter `processing_failed`. `processed` is reserved for explicitly completed records; there is no status-editing workflow in this milestone. Its dashboard count can correctly remain zero. Statistics are global; list filters do not alter overview totals.
-
-## API
-
-| Method and route | Result |
-| --- | --- |
-| GET `/api/health` | Database connectivity; 503 when unavailable |
-| GET `/api/integrations/status` | Credential-presence flags, without secrets |
-| POST `/api/gmail/sync` | `successful`, `skipped`, `failed`, and per-message error categories |
-| GET `/api/complaints` | Paginated items/total; `page`, `page_size`, `case_status`, `complaint_type` |
-| GET `/api/complaints/{id}` | Original email, AI analysis, linked order, assessment, status |
-| GET `/api/dashboard/stats` | Database-backed total, pending review, insufficient information, processed |
-
-404 indicates a missing complaint; 422 invalid query inputs; 409 an overlapping sync; 503 database/provider setup or connectivity failure. Partial batches return 200 with explicit failure counts. The single-process lock is not a distributed queue. Run one worker. CORS allows only the configured frontend origin. This unauthenticated local MVP must remain bound to loopback; it is not a public deployment.
-
-## Tests
+## Kiểm thử
 
 ```sh
 cd backend
 .venv/bin/pytest -q
+
 cd ../frontend
 npm run build
+npm run test:e2e
 ```
 
-`backend/requirements.lock.txt` records the exact Python packages used in verification; `frontend/package-lock.json` locks frontend dependencies.
+Các dịch vụ Google được mock trong kiểm thử tự động. Kết nối Gmail/Gemini thật cần kiểm tra thủ công.
 
-Backend tests use real PostgreSQL, creating a random schema per test and dropping only that schema on cleanup. The database user needs schema-creation permission. Optionally set `TEST_DATABASE_URL` to a dedicated PostgreSQL database; otherwise tests use the configured database with isolated schemas. External Google calls are mocked in automated tests. They do not verify live Gmail or Gemini.
+## Dừng ứng dụng
 
-Frontend browser checks are documented with their setup in `frontend/e2e/`; run with the backend and Vite already running. Use `npm --prefix frontend exec -- playwright install chromium` once if needed, then run `npm --prefix frontend run test:e2e`.
+- Backend/frontend: nhấn `Ctrl+C` trong terminal tương ứng.
+- PostgreSQL:
 
-## Manual live integration procedure
-
-1. Start PostgreSQL, migrate, seed, configure Gemini, authorize Gmail, and start both apps.
-2. Set DH001's customer email to the controlled sender address for the eligible-case demonstration.
-3. Send a new test email to the authorized Gmail inbox: subject `Complaint: DH001 late delivery`; body explaining late delivery and requesting the shipping fee refund. Ensure it matches `GMAIL_QUERY`.
-4. Click Sync Emails. Confirm the actual Gmail message is saved, Gemini returns an email-specific summary, DH001 is linked, database dates are shown separately, and the assessment is `eligible_for_review`.
-5. Sync again. Confirm no duplicate record exists and the email is counted as skipped.
-6. Send a complaint with no order identifier and another with `UNKNOWN999`. Confirm missing/unknown outcomes and readable explanations.
-7. Test an on-time order, undelivered order, and sender mismatch. Verify none becomes an eligible late-delivery shipping refund.
-8. With a fresh eligible email, temporarily remove the Gemini key and restart the backend. Sync: the email must remain visible as failed. Restore the key/restart/resync and verify that the same record is successfully analyzed.
-9. Check browser details: original body is plain text, AI information is labelled, database information is labelled, and no refund/email was sent.
-
-Record the actual outcomes in `IMPLEMENTATION_REPORT.md`. A rendered dashboard or mocked test does not satisfy the live demonstration requirement.
-
-## Limitations
-
-Manual bounded sync, one Gmail account, one process, local token file, simple complaint keyword filtering, and the sample policy only. No live shipping lookup, payment integration, replies, authentication, status editing, queue, multi-tenancy, or automatic financial actions. See the implementation report for verified results and outstanding live setup.
-
-## Current local test mode
-
-The local backend `.env` is configured for at most **10 matching emails per sync**. It searches inbox messages from the last 30 days for broad complaint intent in English or Vietnamese: generic problems, refunds/returns, replacements, damaged items, missing deliveries, delays, wrong items, and incorrect charges. Gmail only performs intake matching; the AI then classifies each saved message as Late Delivery, Not Received, Damaged Item, Wrong Item, Refund Request, or Other. Test subjects no longer need the `[CLAIMPILOT TEST]` prefix. Because keyword search is not semantic classification, tune the query or use a dedicated Gmail label when false positives matter (`GMAIL_RETRY_FAILED=false`).
-
-`GEMINI_TIMEOUT_SECONDS=30` bounds each provider request, and automatic SDK retries are disabled. A provider-wide Gemini failure stops the batch early; the `deferred` count means those messages were not attempted and remain available for a later sync. This reduces waiting during an outage; it cannot guarantee successful or instant AI processing. Set `GMAIL_RETRY_FAILED=true` and broaden `GMAIL_QUERY` when ready to leave test mode, then restart FastAPI.
-
-### Retry one saved complaint
-
-Open a failed complaint and choose **Retry Gemini analysis**. `POST /api/complaints/{id}/analyze` reuses the saved email, calls Gemini, verifies the extracted order in PostgreSQL, and evaluates the policy. It does not scan Gmail or require the saved email to match the current test query. A shared lock prevents concurrent sync/analysis; completed analyses return 409 rather than rerunning. Failures remain saved with a specific error. The button displays progress, disables repeated clicks, and refreshes details and statistics after completion. A retry does not bypass provider timeouts or fabricate AI results.
-
-## Temporary Groq provider
-
-The local installation is temporarily configured with `AI_PROVIDER=groq`. Gemini remains implemented and its credentials are preserved. Set these in `backend/.env`:
-
-```env
-AI_PROVIDER=groq
-GROQ_API_KEY=
-GROQ_MODEL=openai/gpt-oss-120b
-GROQ_TIMEOUT_SECONDS=20
+```sh
+docker-compose stop db
 ```
 
-Fill `GROQ_API_KEY` locally with a key created in the Groq console, then restart FastAPI. Never paste the key into chat or commit it. Open a saved failed email and choose **Retry Groq analysis** to test one complaint without scanning Gmail.
+Không xóa Docker volume nếu muốn giữ dữ liệu complaint.
 
-The selected model supports strict JSON Schema according to [Groq's structured-output documentation](https://console.groq.com/docs/structured-outputs). The adapter uses low reasoning effort, a bounded response size, a 20-second default request timeout, and no automatic retries. Local Pydantic validation and database order/policy verification still apply. This model choice is intended to balance extraction quality and latency; actual accuracy and response times require live testing with your account and representative fictional complaints. No speed or correctness guarantee is claimed.
+## Xử lý lỗi thường gặp
 
-Selection is explicit; there is no automatic cross-provider fallback. Original email subject/body will be sent to the selected provider when analysis runs. The dashboard shows the current provider/model and whether its key is present. To switch back, set `AI_PROVIDER=gemini` and restart FastAPI; no database migration or Gmail reauthorization is needed. Existing saved emails remain available for retry.
+- **Gmail authorization failed:** kiểm tra Desktop OAuth client, test user và callback `http://localhost:8080/`, sau đó cấp quyền lại.
+- **Gemini unavailable/timeout:** kiểm tra API key, model, quota và mạng; sau đó dùng Retry hoặc Sync lại.
+- **Sender mismatch:** gửi complaint từ đúng email khách hàng của đơn.
+- **Không thấy email:** kiểm tra Inbox, thời gian trong `GMAIL_QUERY` và từ khóa complaint.
+- **Frontend không kết nối backend:** xác nhận backend chạy tại `127.0.0.1:8000`.
+
+ClaimPilot là MVP chạy cục bộ cho một nhân viên. Chưa có đăng nhập dashboard, gửi phản hồi, xử lý thanh toán, đồng bộ nền hoặc triển khai công khai.

@@ -15,13 +15,24 @@ def analyze_saved_complaint(db, record, gemini):
     db.commit()
     try:
         analysis = gemini.analyze(record.email_subject, record.email_body)
-        order, verification, matches, policy_result, reason = assess(db, analysis, record.sender_email)
+        record.is_complaint = analysis.is_complaint
         record.complaint_type = analysis.complaint_type
         record.order_id = analysis.order_id
         record.requested_action = analysis.requested_action
         record.ai_summary = analysis.summary
         record.missing_information = analysis.missing_information
         record.priority = analysis.priority
+        if not analysis.is_complaint:
+            record.verified_order_id = None
+            record.verification_status = "not_checked"
+            record.sender_matches_order = None
+            record.policy_result = "not_applicable"
+            record.policy_reason = "The email was classified as unrelated to a customer complaint."
+            record.case_status = "processed"
+            record.processing_error = None
+            db.commit()
+            return record
+        order, verification, matches, policy_result, reason = assess(db, analysis, record.sender_email)
         record.verified_order_id = order.id if order else None
         record.verification_status = verification
         record.sender_matches_order = matches
@@ -67,8 +78,11 @@ def synchronize(db, gmail, gemini):
                         raise
                     result.skipped += 1
                     continue
-            analyze_saved_complaint(db, record, gemini)
-            result.successful += 1
+            analyzed = analyze_saved_complaint(db, record, gemini)
+            if analyzed.is_complaint:
+                result.successful += 1
+            else:
+                result.skipped += 1
         except IntegrationError as exc:
             db.rollback()
             if record is not None and record.id is not None:

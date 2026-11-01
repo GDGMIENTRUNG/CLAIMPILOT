@@ -6,6 +6,7 @@ ComplaintType = Literal["late_delivery", "not_received", "damaged_item", "wrong_
 CaseStatus = Literal["processing", "pending_review", "insufficient_information", "processing_failed", "processed"]
 class Analysis(BaseModel):
     model_config = ConfigDict(extra="forbid")
+    is_complaint: bool
     complaint_type: ComplaintType
     order_id: str | None = Field(max_length=100)
     requested_action: Literal["shipping_fee_refund", "order_refund", "replacement", "request_information", "other"]

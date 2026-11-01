@@ -15,7 +15,7 @@ def setup_client(monkeypatch, content=None, reason='stop'):
     monkeypatch.setattr(settings,'groq_api_key','test-key-never-sent')
     client=MagicMock()
     client.__enter__.return_value=client
-    data=Analysis(complaint_type='late_delivery',order_id='DH001',requested_action='shipping_fee_refund',summary='Customer reports late delivery.',missing_information=[],priority='medium')
+    data=Analysis(is_complaint=True,complaint_type='late_delivery',order_id='DH001',requested_action='shipping_fee_refund',summary='Customer reports late delivery.',missing_information=[],priority='medium')
     client.chat.completions.create.return_value=SimpleNamespace(choices=[SimpleNamespace(finish_reason=reason,message=SimpleNamespace(content=data.model_dump_json() if content is None else content))])
     factory=MagicMock(return_value=client)
     monkeypatch.setattr('app.services.groq_service.Groq',factory)

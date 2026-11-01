@@ -16,9 +16,9 @@ from scripts.seed_data import seed
 
 
 def analysis(order_id='DH001', **kw):
-    return Analysis(complaint_type='late_delivery', order_id=order_id, requested_action=kw.get('requested_action','shipping_fee_refund'), summary='Customer reports late delivery.', missing_information=[], priority='medium')
+    return Analysis(is_complaint=kw.get('is_complaint', True), complaint_type=kw.get('complaint_type', 'late_delivery'), order_id=order_id, requested_action=kw.get('requested_action','shipping_fee_refund'), summary='Customer reports late delivery.', missing_information=[], priority='medium')
 
-def email(message_id='message-1', sender='dh001@example.com'):
+def email(message_id='message-1', sender='hang290806@gmail.com'):
     return dict(gmail_message_id=message_id, sender_email=sender, email_subject='Late delivery', email_body='My DH001 order was late. Please refund shipping.', received_at=datetime.now(timezone.utc))
 
 def services(ids=None):
@@ -35,7 +35,12 @@ def services(ids=None):
     (None,'missing_order_id','insufficient_information'),
 ])
 def test_policy(db, order_id, verification, result):
-    sender = f'{order_id.lower()}@example.com' if order_id else 'nobody@example.com'
+    senders = {
+        'DH001': 'hang290806@gmail.com',
+        'DH002': 'phannhungoc2k@gmail.com',
+        'DH003': 'donchick24@gmail.com',
+    }
+    sender = senders.get(order_id, 'nobody@example.com')
     order, actual_verification, matches, actual_result, reason = assess(db, analysis(order_id), sender)
     assert actual_verification == verification
     assert actual_result == result
@@ -52,12 +57,12 @@ def test_missing_delivery_data(db):
     order = db.scalar(select(Order).where(Order.order_id == 'DH001'))
     order.expected_delivery_date = None
     db.flush()
-    result = assess(db, analysis(), 'dh001@example.com')
+    result = assess(db, analysis(), 'hang290806@gmail.com')
     assert result[1] == 'insufficient_data'
 
 
 def test_unsupported_action(db):
-    assert assess(db, analysis(requested_action='replacement'), 'dh001@example.com')[3] == 'insufficient_information'
+    assert assess(db, analysis(requested_action='replacement'), 'hang290806@gmail.com')[3] == 'insufficient_information'
 
 
 def test_seed_repeatable(db):
@@ -75,6 +80,31 @@ def test_sync_and_duplicate(db):
     assert synchronize(db,gmail,gemini).skipped == 1
     assert gemini.analyze.call_count == 1
     assert db.scalar(select(func.count()).select_from(Complaint)) == 1
+
+
+def test_non_complaint_is_retained_but_hidden(db, client):
+    gmail, gemini = services()
+    gmail.get_message.side_effect = lambda ident: email(ident) | {
+        'email_subject': 'Limited-time course promotion',
+        'email_body': 'Buy this course today and grow your career.',
+    }
+    gemini.analyze.return_value = analysis(
+        order_id=None,
+        is_complaint=False,
+        complaint_type='other',
+        requested_action='other',
+    )
+    result = synchronize(db, gmail, gemini)
+    assert (result.successful, result.skipped) == (0, 1)
+    record = db.scalar(select(Complaint))
+    assert record.is_complaint is False
+    assert record.case_status == 'processed'
+    assert record.policy_result == 'not_applicable'
+    assert client.get('/api/complaints').json()['total'] == 0
+    assert client.get('/api/dashboard/stats').json()['total'] == 0
+    assert client.get(f'/api/complaints/{record.id}').status_code == 404
+    assert synchronize(db, gmail, gemini).skipped == 1
+    assert gemini.analyze.call_count == 1
 
 
 def test_database_dedup_constraint(db):
@@ -252,7 +282,7 @@ def test_gemini_rate_limit_sanitized(monkeypatch):
 
 def test_policy_uses_database_dates_not_ai_complaint_category(db):
     extracted = analysis().model_copy(update={'complaint_type':'refund_request'})
-    assert assess(db, extracted, 'dh001@example.com')[3] == 'eligible_for_review'
+    assert assess(db, extracted, 'hang290806@gmail.com')[3] == 'eligible_for_review'
 
 
 def test_database_error_is_sanitized(client):

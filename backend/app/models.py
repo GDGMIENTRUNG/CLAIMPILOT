@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from decimal import Decimal
-from sqlalchemy import String, Text, DateTime, Numeric, ForeignKey, CheckConstraint, func
+from sqlalchemy import String, Text, DateTime, Numeric, ForeignKey, CheckConstraint, Boolean, func, true
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
@@ -24,6 +24,7 @@ class Complaint(Base):
         CheckConstraint("priority IS NULL OR priority IN ('low','medium','high')"),
     )
     id: Mapped[int] = mapped_column(primary_key=True)
+    is_complaint: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=true(), index=True)
     gmail_message_id: Mapped[str] = mapped_column(String(200), unique=True)
     sender_email: Mapped[str] = mapped_column(String(320))
     email_subject: Mapped[str] = mapped_column(Text)

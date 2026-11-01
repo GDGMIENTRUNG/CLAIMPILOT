@@ -32,11 +32,11 @@ def integrations():
     return dict(gmail_configured=settings.token_path.is_file(), gemini_configured=bool(settings.gemini_api_key), ai_provider=settings.ai_provider, ai_model=settings.groq_model if settings.ai_provider == "groq" else settings.gemini_model, ai_configured=bool(settings.groq_api_key if settings.ai_provider == "groq" else settings.gemini_api_key), note="Configuration presence only; connectivity is verified during synchronization.")
 @app.get("/api/dashboard/stats", response_model=Stats)
 def stats(db: DB):
-    counts = dict(db.execute(select(Complaint.case_status, func.count()).group_by(Complaint.case_status)).all())
+    counts = dict(db.execute(select(Complaint.case_status, func.count()).where(Complaint.is_complaint.is_(True)).group_by(Complaint.case_status)).all())
     return dict(total=sum(counts.values()), **{key: counts.get(key, 0) for key in ["pending_review", "insufficient_information", "processed"]})
 @app.get("/api/complaints", response_model=ComplaintPage)
 def complaints(db: DB, page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100), case_status: CaseStatus | None = None, complaint_type: ComplaintType | None = None):
-    query = select(Complaint)
+    query = select(Complaint).where(Complaint.is_complaint.is_(True))
     if case_status:
         query = query.where(Complaint.case_status == case_status)
     if complaint_type:
@@ -47,7 +47,7 @@ def complaints(db: DB, page: int = Query(1, ge=1), page_size: int = Query(20, ge
 @app.get("/api/complaints/{complaint_id}", response_model=ComplaintDetail)
 def detail(complaint_id: int, db: DB):
     record = db.get(Complaint, complaint_id)
-    if record is None:
+    if record is None or not record.is_complaint:
         raise HTTPException(404, "Complaint not found")
     return record
 @app.post("/api/gmail/sync", response_model=SyncResult)
