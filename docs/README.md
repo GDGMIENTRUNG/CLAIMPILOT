@@ -13,7 +13,7 @@
 
 ## Sản phẩm/hợp đồng/chất lượng
 
-**Database đã chốt:** [CLAIMPILOT_MVP_DB_V1](DATABASE_DESIGN.md),13 bảng/203 cột cho mốc 50%/80%/MVP, đầy đủ dictionary/FK/index/transaction/backfill; trạng thái FROZEN_SPEC, DB gates vẫn NOT_RUN. Sau BASE, A/B/C dùng schema chung, không tự thêm bảng/cột theo task.
+**Database đã chốt:** [CLAIMPILOT_MVP_DB_V1](DATABASE_DESIGN.md),13 bảng/203 cột cho mốc 50%/80%/MVP, đầy đủ dictionary/FK/index/transaction/backfill; trạng thái FROZEN_SPEC, đã có model/migration0005 và local schema; DB01/02/04 có evidence local, còn gates nghiệp vụ/cloud chưa đủ. Sau BASE, A/B/C dùng schema chung, không tự thêm bảng/cột theo task.
 
 - [PRD](PRD.md), [SRS](SRS.md), [WORKFLOW](WORKFLOW.md), [architecture](SYSTEM_ARCHITECTURE.md).
 - [Shared ports/file owner](SHARED_CONTRACTS.md), [database](DATABASE_DESIGN.md), [API](API_SPECIFICATION.md), [UI/UX](UI_UX_SPECIFICATION.md), [sáu features](FEATURE_SPECIFICATION.md).
@@ -21,4 +21,4 @@
 - [Testing](TESTING_GUIDELINES.md); test fullstack [A32](test-cases/A_TEST_CASES.md), [B19](test-cases/B_TEST_CASES.md), [C27](test-cases/C_TEST_CASES.md); thông tin đối chiếu mã cũ nằm trong từng case.
 - [AC01–AC12](ACCEPTANCE_MATRIX.md), [release checklist](RELEASE_CHECKLIST.md), [decisions](DECISIONS.md), [known issues](KNOWN_ISSUES.md), [changelog](CHANGELOG.md).
 
-CURRENT là code; TARGET là thiết kế; VERIFIED cần bằng chứng. Docs v3 thay cách phân tầng cũ, giữ workflow nhiều email/decision và nhân viên xác nhận gửi. Các test vẫn NOT_RUN, FS tasks vẫn TODO; module/harness/Cloud Run mới chưa được code trong đợt sửa tài liệu. [README gốc](../README.md) giữ hướng dẫn chạy CURRENT.
+CURRENT là code; TARGET là thiết kế; VERIFIED cần bằng chứng. Docs v3 thay cách phân tầng cũ, giữ workflow nhiều email/decision và nhân viên xác nhận gửi. 78 test FS vẫn NOT_RUN, FS tasks vẫn TODO; BASE DB/container đã có với92 tests đạt, harness/domain/cloud thật chưa xong. [Bằng chứng BASE](../IMPLEMENTATION_REPORT.md). [README gốc](../README.md) giữ hướng dẫn chạy CURRENT.

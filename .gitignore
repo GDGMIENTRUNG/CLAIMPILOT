@@ -12,3 +12,4 @@ dist/
 **/*.tsbuildinfo
 frontend/test-results/
 frontend/playwright-report/
+infra/cloud-run.env

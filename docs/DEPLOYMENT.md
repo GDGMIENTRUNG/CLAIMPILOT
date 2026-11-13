@@ -1,6 +1,43 @@
 # Deployment — TARGET v3, A nền tảng + B/C domain checks
 
-Đây là hướng dẫn task triển khai tương lai, không tuyên bố đã có tài nguyên. Đợt sửa docs không deploy/migrate/gửi email. A làm nền Cloud Run/SQL/Secrets/Scheduler, B cấu hình GCS/Gemini và C xác minh Gmail draft/send; cả ba fullstack, không giao toàn Google/cloud cho C. Region mặc định asia-southeast1, project nhóm có billing. Ghi project/region/URL/image digest/revision/SQL connection name vào bàn giao, không secrets.
+BASE ngày14/11 đã có Dockerfile, app compose, migration0005, infra scripts và kiểm local; chưa có tài nguyên cloud được tạo trong đợt này. Project `claimpilot-513010` ACTIVE, billing chưa hoạt động (preflight exit3). A làm nền Cloud Run/SQL/Secrets/Scheduler, B cấu hình GCS/Gemini và C xác minh Gmail draft/send; cả ba fullstack. Region asia-southeast1. Ghi project/region/URL/image digest/revision/SQL connection name vào bàn giao, không secrets.
+
+## Cấu hình BASE có thể dùng ngay
+
+- `Dockerfile`: Node22 build React → Python3.11, dependencies từ requirements.lock.txt, một process bind PORT, user10001. React/API cùng origin; không startup migration/seed.
+- `docker-compose.app.yml`: local http://localhost:8080 nối DB hiện có, lấy key/provider từ backend/.env; không mount OAuth token mặc định. Các .env/token cũ vẫn giữ nguyên. Chạy theo [README](../README.md).
+- `infra/cloud-run.sh`: mặc định chỉ `plan`; `preflight` kiểm project/billing read-only. Các action cloud có `--apply` chỉ dành cho lúc nhận task triển khai thật; chưa thực thi trong đợt BASE này.
+- `infra/put_secret.py`: nhập key/password ẩn hoặc đọc credential file rồi chuyển stdin vào Secret Manager; không truyền giá trị secret bằng CLI args. Không tạo secret version giả khi chưa có key.
+- `infra/bootstrap-roles.sql` / `runtime-grants.sql`: DB migration owner và runtime DML tách biệt; decisions/audit chỉ SELECT/INSERT ở runtime, không UPDATE/DELETE. Không dùng local DB owner làm user app trên cloud.
+- `.dockerignore` và `.gcloudignore` loại credentials/venv/dependencies/backup khỏi build context/upload. `infra/cloud-run.env` là config local được gitignore.
+
+Chuẩn bị config không chứa secrets:
+
+```sh
+cp infra/cloud-run.env.example infra/cloud-run.env
+bash infra/cloud-run.sh plan
+bash infra/cloud-run.sh preflight
+```
+
+Sau khi billing/IAM sẵn và đã vào task triển khai:
+
+1. `bash infra/cloud-run.sh provision --apply`: bật APIs/tạo registry/SQL17/private bucket/SA và secret containers; chưa tạo secret versions hay Scheduler job. SQL/public IP không mở authorized network cho mọi IP; Run nối qua Cloud SQL attachment/socket.
+2. Kết nối bằng Cloud SQL Auth Proxy trên loopback, port khác local5432. Chạy bootstrap-roles.sql trong database claimpilot với admin; dùng psql `\password claimpilot_migrator` và `\password claimpilot_runtime` để đặt mật khẩu ẩn. Không cấp cloudsqlsuperuser cho runtime. Migrator cần sở hữu bảng tạo mới; không dùng database cũ khác owner mà chưa review.
+3. Upload DB URL secrets riêng, ví dụ dưới. Ghi version nhận được vào cloud-run.env; không dùng latest. Model/provider có thể cấu hình mà không đổi database. Key AI và Gmail chưa có được để version trống, app vẫn boot.
+4. Đặt IMAGE_TAG duy nhất. `bash infra/cloud-run.sh build --apply` build/push bằng Cloud Build; `migrate --apply` chạy Job cùng image, migrator SA và DB URL riêng, chờ exit0. Sau đó chạy runtime-grants.sql bằng admin/migration owner.
+5. `bash infra/cloud-run.sh deploy --apply`: một service **private IAM**, runtime SA, SQL socket, secrets pin, tối đa1 instance. Mở qua `gcloud run services proxy claimpilot --region=asia-southeast1 --project=claimpilot-513010 --port=8080` bằng tài khoản có Run Invoker. Chưa có đăng nhập ứng dụng nên chưa bật allUsers/public.
+6. Khi có key ban tổ chức: upload secret, điền version/provider/model, deploy revision mới. Nếu API được cấp không tương thích adapter Gemini/Groq hiện tại, B bổ sung adapter theo contract; không đổi SQL. OAuth compose/live send là task C, không phát sinh chỉ vì đã có API key.
+
+Ví dụ chạy từ repo root (không chứa password/key):
+
+```sh
+backend/.venv/bin/python infra/put_secret.py claimpilot-db-runtime --sql-connection claimpilot-513010:asia-southeast1:claimpilot-db
+backend/.venv/bin/python infra/put_secret.py claimpilot-db-migrator --sql-connection claimpilot-513010:asia-southeast1:claimpilot-db
+# Chỉ khi có key thật:
+backend/.venv/bin/python infra/put_secret.py claimpilot-gemini-key
+```
+
+Người chạy Cloud Build cần builder SA/push IAM theo project; script không tự cấp Editor hoặc sửa billing. Các action cloud chưa kiểm thực thi: billing hiện chặn; kết quả local không thay nghiệm thu Cloud SQL/Run. Pipeline cũ chưa có app auth/CaseStore/thread workflows; các mục TARGET bên dưới chỉ triển khai khi domain code đã có.
 
 ## 1. Preflight trước buổi
 

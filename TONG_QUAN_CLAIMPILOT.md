@@ -176,7 +176,7 @@ Chi tiết: [task C](docs/tasks/C_RESOLUTION.md), [27 test case C](docs/test-cas
 
 ## 6. Cách ba người làm song song và ghép sản phẩm
 
-Database chuẩn là **CLAIMPILOT_MVP_DB_V1**,13 bảng đã chốt trong [DATABASE_DESIGN](docs/DATABASE_DESIGN.md). BASE triển khai đủ models/migration một lần để cả mốc 50% và 80% dùng chung; A/B/C sau đó chỉ code business/CRUD trên schema. DB01–DB12 phải kiểm thật trước khi báo database sẵn sàng; hiện mới FROZEN_SPEC, chưa migrate.
+Database chuẩn là **CLAIMPILOT_MVP_DB_V1**,13 bảng/203 cột đã có models/migration0005 và chạy local ngày14/11, dùng chung mốc50%/80%/MVP; A/B/C chỉ code business/CRUD lên mappings sẵn có. DB01/DB02/DB04 có evidence local; các gate nghiệp vụ/cloud còn thiếu. Docker một origin8080 đã chạy; Cloud Run có scripts nhưng billing chưa hoạt động. Chưa auth/CaseStore/harness/tính năng v3. Xem [báo cáo thực tế](IMPLEMENTATION_REPORT.md), không tạo lại database từ đầu.
 
 1. **Chốt nền chung trước:** schema, API/DTO, trạng thái, interface gọi chéo, khung module và dữ liệu kiểm thử. Phần chuẩn bị này gọi là BASE.
 2. **Mỗi người một nhánh/worktree:** làm UI/API/models/tests trong module mình, không cùng sửa các file entrypoint lớn.

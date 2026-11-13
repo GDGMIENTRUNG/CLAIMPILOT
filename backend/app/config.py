@@ -17,11 +17,13 @@ class Settings(BaseSettings):
     google_client_secret: str = ""
     google_redirect_uri: str = "http://localhost:8080/"
     gmail_token_path: str = ".secrets/gmail-token.json"
+    gmail_token_read_only: bool = False
     gmail_query: str = 'in:inbox newer_than:30d {subject:complaint subject:"refund request" subject:"late delivery" subject:"wrong item" subject:"not received" "khiếu nại" "phàn nàn" "giao trễ" "giao sai" "chưa nhận được hàng" "hàng bị hư hỏng"}'
     gmail_batch_size: int = Field(default=25, ge=1, le=100)
     gmail_retry_failed: bool = True
     gemini_timeout_seconds: int = Field(default=30, ge=5, le=120)
     frontend_origin: str = "http://localhost:5173"
+    frontend_dist: Path = ROOT.parent / "frontend" / "dist"
     @property
     def token_path(self):
         p = Path(self.gmail_token_path)

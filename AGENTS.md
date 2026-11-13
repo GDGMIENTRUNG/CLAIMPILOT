@@ -21,7 +21,7 @@
 ## Làm song song và tích hợp
 
 - Ba worktree từ cùng baseline BASE; mỗi phần có router/models/schemas/services/components/tests riêng. A chỉ sở hữu composition root, core CaseStore và infra; không là người viết backend cho B/C.
-- Mỗi người ánh xạ model/DTO phần mình đúng dictionary đã khóa; B/C review metadata trước khi A tổng hợp baseline13 bảng và một migration chain. Sau BASE chỉ CRUD/business theo schema, không tự tạo schema delta lúc code feature. B/C vẫn dùng harness để phát triển mà không chờ A code nghiệp vụ/runtime.
+- Baseline13 bảng và migration0005 đã có trong app/models.py/schema_v1.py; mỗi người dùng mappings sẵn có, tự viết DTO phần mình. B/C review metadata; không định nghĩa lại bảng/Base để chia module. Sau BASE chỉ CRUD/business theo schema, không tự tạo schema delta lúc code feature. B/C vẫn dùng harness để phát triển mà không chờ A code nghiệp vụ/runtime.
 - B/C dùng contract harness và test doubles cho dependency chưa có. Chỉ tests/development được giả, config production cấm fake adapters hoặc bỏ qua auth để app trông thành công.
 - Cross-domain case mutation qua CaseStore transaction/version/audit. Không sửa thẳng bảng domain người khác hoặc mở transaction lồng gây mất atomicity.
 - Entry files App/main/models/config/API helper được chuẩn bị interface trong BASE; domain chỉ sửa module của mình. Thay đổi shared gửi owner A tích hợp, API nghiệp vụ B/C tự sở hữu.
@@ -31,7 +31,7 @@
 
 - Nhân viên preview rồi confirmed send; không send từ AI/approve/Scheduler. Coding agent không tự gửi thư thật chỉ vì có API: live test cần task và mailbox nhóm kiểm soát.
 - Không payment/refund API, không secrets/PII trong prompt/log/Git/frontend. Email/ảnh không đáng tin, không URL fetch tùy ý.
-- Lần cập nhật SDD v3 hiện tại chỉ docs: không feature code/migration/cloud/send. Đây không phải lệnh cấm code về sau khi người dùng giao FS task.
+- Đợt SDD v3 ban đầu chỉ docs. Người dùng đã giao BASE bổ sung DB/container/cấu hình Cloud Run trên code hiện có: migration0005 đã kiểm local; chưa triển khai cloud hoặc tính năng v3. Đọc IMPLEMENTATION_REPORT và CONTEXT trước khi làm tiếp. Không tự mở rộng sang FS tasks/send khi chỉ nhận việc nền tảng.
 
 ## Bàn giao và review
 

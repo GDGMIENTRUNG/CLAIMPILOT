@@ -1,6 +1,6 @@
 # Database Design — CLAIMPILOT_MVP_DB_V1
 
-**Trạng thái: FROZEN_SPEC — chốt đặc tả, chưa tạo bảng/migrate database thật.** Ngày chốt 13/11/2026. PostgreSQL 17 trên Cloud SQL; SQLAlchemy 2 + Alembic. Đây là nguồn duy nhất về bảng/cột/type/default/constraint, áp dụng cho cả mốc 50%,80% và đầy đủ MVP.
+**Trạng thái: FROZEN_SPEC; đã triển khai local bằng migration0005 ngày14/11/2026.** Ngày chốt đặc tả13/11/2026. Models/schema_v1/backfill_v1 đã có; PostgreSQL17 local đủ13 bảng/203 cột, legacy data giữ nguyên. Cloud SQL và gate nghiệp vụ chưa nghiệm thu; xem IMPLEMENTATION_REPORT và phần11. PostgreSQL 17 trên Cloud SQL; SQLAlchemy 2 + Alembic. Đây là nguồn duy nhất về bảng/cột/type/default/constraint, áp dụng cho cả mốc 50%,80% và đầy đủ MVP.
 
 ## 1. Cam kết phạm vi và quy tắc khóa schema
 
@@ -95,7 +95,7 @@ verification_status legacy không CHECK enum mới vì đang có các mã not_ch
 
 ## 6. Dictionary — đủ cột cho baseline
 
-Những cột legacy được giữ tên/nullability; riêng complaints.processing_error được mở rộng VARCHAR(80) thành VARCHAR(100), không cắt dữ liệu. Server defaults mới chỉ áp dụng qua migration additive có kiểm tra backfill. Bảng mới không có dữ liệu thật trước migration. Chưa có model/migration mới thực thi từ tài liệu này.
+Những cột legacy được giữ tên/nullability; riêng complaints.processing_error được mở rộng VARCHAR(80) thành VARCHAR(100), không cắt dữ liệu. Server defaults mới chỉ áp dụng qua migration additive có kiểm tra backfill. Bảng mới không có dữ liệu thật trước migration. Metadata thực thi: backend/app/schema_v1.py; ORM: models.py; migration0005 nối0004. Snapshot/backfill_v1 là dependency migration đã áp dụng: không sửa; cần thay đổi phải qua change-control và revision mới.
 
 ### 6.1. `orders`
 
@@ -556,7 +556,7 @@ Không lưu API key/OAuth token/password gốc, raw MIME hoặc binary ảnh tro
 
 ## 11. Gate khóa schema cho A/B/C
 
-**Mọi dòng dưới đây hiện NOT_RUN.** Đây là tiêu chí để BASE chuyển từ đặc tả sang baseline triển khai, không kết quả đã có database.
+**Evidence BASE ngày14/11:** DB01, DB02 và DB04 đạt ở mức PostgreSQL local (schema/migration/constraints), chưa phải VERIFIED feature hoặc Cloud SQL. DB03/05/06/07/08/09/10/11 có constraints hoặc kiểm thử SQL từng phần; logic service/UI/live còn NOT_RUN. DB12 cloud NOT_RUN, preflight billing chặn triển khai. Bảng dưới là phạm vi gate đầy đủ; 92 backend tests không thay 78 test FS hoặc ALL1. Bằng chứng chi tiết trong [IMPLEMENTATION_REPORT](../IMPLEMENTATION_REPORT.md).
 
 | ID | Kiểm tra | Case liên quan / owner |
 |---|---|---|
@@ -579,4 +579,4 @@ Sau khi BASE đạt: A ghi revision baseline và export metadata manifest đã r
 
 Thiết kế đối chiếu với [PostgreSQL 17 constraints](https://www.postgresql.org/docs/17/ddl-constraints.html), [partial indexes](https://www.postgresql.org/docs/17/indexes-partial.html), [SQLAlchemy composite constraints](https://docs.sqlalchemy.org/en/20/core/constraints.html) và [GCS preconditions](https://docs.cloud.google.com/storage/docs/request-preconditions). Các rule snapshot/UoW/provider là quyết định thiết kế ClaimPilot, không bảo đảm của PostgreSQL hoặc Gmail.
 
-Kiểm tra Markdown/dictionary không chứng minh DDL/transactions chạy thật. Models/migration/harness và DB01–DB12 phải được thực hiện ở BASE, thử trên PostgreSQL rồi mới phát hành. FROZEN_SPEC đủ dùng cho phạm vi đã chốt, không phải cam kết không bao giờ đổi schema khi thêm doanh nghiệp, thanh toán, nhiều mailbox hoặc yêu cầu mới.
+Kiểm tra Markdown/dictionary không chứng minh DDL/transactions chạy thật. Models/migration0005 đã thử trên PostgreSQL local; harness và các gate nghiệp vụ/cloud còn phải hoàn tất trước phát hành. FROZEN_SPEC đủ dùng cho phạm vi đã chốt, không phải cam kết không bao giờ đổi schema khi thêm doanh nghiệp, thanh toán, nhiều mailbox hoặc yêu cầu mới.

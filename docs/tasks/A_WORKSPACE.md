@@ -6,9 +6,11 @@
 
 ## Việc được giao
 
+BASE DB/container đã có ngày14/11: dùng13 mappings tại app/models.py, migration0005 và infra scripts; không viết lại schema. Còn CaseStore/Principal/registry/harness/module shells và tasks bên dưới. Cloud preflight billing đang chặn; xem IMPLEMENTATION_REPORT. Nếu cần models.py trong domain, chỉ re-export mappings sẵn có; không tạo Table/Base mới cho cùng bảng.
+
 - **FS-A1:** LoginPage + auth router/sessions/CSRF/rate-limit + shared api client; CurrentStaff Protocol ở BASE để B/C test router độc lập, production dependency thật.
 - **FS-A2:** queues/CaseList/ConversationPanel và API/messages/canonical thread/dedupe; Gmail read + parser text/metadata. Gọi ports B sau saved message, follow-up không keyword vẫn cập nhật, outbound C gửi không tạo complaint mới. Tạo fixture orders/messages tối thiểu, không nhiệm vụ trình diễn.
-- **FS-A3:** composition registry, core CaseStore UoW/version/audit, metadata facade và Alembic aggregate, Docker/Cloud Run/Cloud SQL/Secrets/health UI/API. B/C tự viết model/service/router/component, bạn chỉ tổng hợp shared manifests. Không ép chờ migration production để code domain tests.
+- **FS-A3:** composition registry, core CaseStore UoW/version/audit, metadata facade và Alembic aggregate, Docker/Cloud Run/Cloud SQL/Secrets/health UI/API. B/C dùng mappings sẵn có, tự viết DTO/service/router/component, bạn tổng hợp shared manifests. Không ép chờ migration production để code domain tests.
 - **FS-A4:** Scheduler OIDC/DB lock/bounded cursor/retry/deferred + SyncStatus/last_success UI, kiểm tests sync/status/cloud. Nền cloud đúng project, không để public internal route bỏ verify OIDC.
 
 ## File owner và interface

@@ -1,4 +1,55 @@
-# ClaimPilot — 30% MVP implementation report
+# ClaimPilot — implementation report
+
+## BASE thực hiện ngày14/11/2026 — DB/container/cấu hình Cloud Run
+
+Tiếp tục trên ứng dụng hiện có, không xây lại UI/pipeline. Phạm vi đã làm: schema/model/migration/backfill, container cùng origin và scripts cloud chờ billing. Bàn giao Git theo yêu cầu người dùng qua nhánh `feat/mvp-db-cloud-run-base`, đích merge `main`; tra `git log` để lấy revision chính xác. Revision ứng dụng trước BASE là `20ebb35`.
+
+| Hạng mục | Bằng chứng thực tế |
+|---|---|
+| Regression trước thay đổi | 62 backend tests PASS, PostgreSQL17 local |
+| Backend sau thay đổi | 92 tests PASS: giữ62 cũ +30 mới; local Python3.14 và image Python3.11/dependency lock đều đạt; không Google thật |
+| Schema | 13 bảng/203 cột, dictionary/type/nullability kiểm tự động; một Alembic head0005; `alembic check` không drift types/defaults/FKs/indexes |
+| Upgrade cũ/mới | Khôi phục backup vào DB thử; upgrade0004→0005, fresh→0005 và upgrade lần2 đạt; backfill lần2 trả0 |
+| Bảo toàn dữ liệu | Fingerprint toàn cột cũ của3 orders/7 complaints không đổi trước/sau trên clone và database local; giữ IDs/body/tri-state/timestamps |
+| Backup | `backend/.secrets/backups/before_0005_20261113T180608Z.dump`, custom-format, mode0600; directory0700; `pg_restore --list` đạt; không commit |
+| Container | Docker build Node22/Python3.11 thành công; user10001; không .env/token/backup trong image |
+| HTTP/DB thật | http://localhost:8080: UI/assets/health/stats/list/SPA đều200; API lạ JSON404; assets/dotfile thiếu404 |
+| Chưa có AI key | Container tạm không AI/Gmail credentials vẫn mở UI/health, `ai_configured=false`; PORT9090 được dùng đúng; đã dừng container tạm |
+| Cloud preflight | `claimpilot-513010` ACTIVE, billing chưa hoạt động, script exit3; không provision/deploy/bật APIs/secrets trong đợt này |
+| Browser | Google Chrome qua Playwright: desktop1440 và iPhone13 viewport đều render UI/API/DB thật, không overflow/JS error; chỉ GET, không click sync/send |
+| Build upload | `gcloud meta list-files-for-upload` xác minh không .env/token/backup/venv/node_modules/private config trong upload list |
+| Chưa kiểm | Workflow v3, Google/Gmail/Gemini live, Cloud SQL/Run/Storage/Scheduler thật, 78 test FS và ALL1 |
+
+Files chính: `backend/app/schema_v1.py` (snapshot bất biến), `models.py` (13 ORM mappings), `backfill_v1.py`, `migrations/versions/0005_mvp_baseline.py`, `tests/test_baseline.py`, `tests/test_container_runtime.py`, `Dockerfile`, `docker-compose.app.yml`, `.dockerignore`, `.gcloudignore`, `infra/`.
+
+Ràng buộc được kiểm PostgreSQL: canonical thread/alias, composite FK cùng case/reply (kể cả pointer deferred), decision basis unique và rollback audit, operation unknown khóa attempt mới/confirmed send, text active unique và failed/stale history, asset owner/size/pixel/MIME/hash/generation, evidence pending unique/single-side, session expiry, intake ignore metadata, fulfillment/close/reopen fields. Đây là bằng chứng SQL; không suy ra API/UI/CaseStore đã thực hiện các rule đó.
+
+DB01/DB02/DB04 đạt **local**. Những gate khác có phần constraints đã có nhưng còn service/runtime/live; DB12 cloud NOT_RUN. BASE vẫn IN_PROGRESS, không reviewer VERIFIED cả baseline hay FS tasks.
+
+Giới hạn cần A/B/C biết:
+
+- Pipeline cũ vẫn chạy và ghi fields legacy; messages/runs mới được backfill cho dữ liệu trước0005, chưa tự cập nhật cho inbound mới. A/B/C phải nối luồng mới qua CaseStore/version/audit; không dùng thêm migration để giải quyết wiring.
+- Chưa Principal/CaseStore/registry/harness/module shells/auth. Ba người dùng mappings sẵn có, tự làm DTO/services/API/UI theo task, thống nhất entry point shared với A.
+- Snapshot `schema_v1.py`/`backfill_v1.py` là dependency của migration đã áp dụng: không sửa cho feature sau này.0005 chặn destructive downgrade; cần restore backup đã thử hoặc reviewed forward migration.
+- Chưa có Gmail compose consent hoặc send thật. OAuth/local .env giữ nguyên; container không mount local token mặc định. Cloud token read-only refresh giữ trong memory, live check còn chưa chạy.
+- Cloud scripts chỉ chuẩn bị. Còn billing, IAM quyền người deploy, Cloud SQL roles/passwords và secret versions thật trước deploy; sau đó mới nhập key ban tổ chức. Key chưa có không ngăn khởi động UI/health.
+- Cloud bootstrap private IAM vì hiện chưa app auth. Chỉ khi A hoàn tất auth/OIDC mới xét public login/Scheduler. Không tạo Scheduler job vào route chưa tồn tại.
+
+Lần test container đầu đạt91/92 vì compose đặt FRONTEND_ORIGIN=8080 còn test CORS cũ cố định5173. Đã chạy lại92/92 với env5173 đúng fixture; giữ policy ứng dụng8080 cho container, không sửa/bỏ test. Chromium bundle của Playwright chưa có; browser smoke dùng Google Chrome đã cài, không tải thêm browser.
+
+Kiểm lại sau bàn giao (PostgreSQL local phải đang chạy):
+
+```sh
+backend/.venv/bin/pytest -q backend/tests
+cd backend
+.venv/bin/alembic current
+.venv/bin/alembic heads
+.venv/bin/alembic check
+```
+
+Chạy Docker và hướng dẫn cloud tại [README](README.md) / [DEPLOYMENT](docs/DEPLOYMENT.md). Các phần bên dưới là lịch sử trước BASE, không thay evidence ngày14/11.
+
+## Lịch sử — 30% MVP
 
 Verified on October 28, 2026 (Asia/Ho_Chi_Minh).
 

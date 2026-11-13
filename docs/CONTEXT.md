@@ -1,21 +1,30 @@
 # Context — CURRENT và TARGET v3
 
-Khảo sát code: 13/11/2026, Asia/Ho_Chi_Minh. Hackathon 14/11/2026, 07:30–11:30, ba fullstack dùng AI; đủ sáu hạng mục, bắt buộc Cloud Run. Người dùng đã chốt chỉ cập nhật docs đợt này và cho phép thiết kế thêm schema một đợt để tránh rework khi code.
+Khảo sát code: 13/11/2026, Asia/Ho_Chi_Minh. Hackathon 14/11/2026, 07:30–11:30, ba fullstack dùng AI; đủ sáu hạng mục, bắt buộc Cloud Run. Sau đợt docs-only, người dùng đã giao triển khai BASE giới hạn: DB đầy đủ + container + cấu hình Cloud Run, tiếp tục trên ứng dụng hiện có.
 
 ## CURRENT có bằng chứng code
 
 | Phần | Entry point | Hiện có |
 |---|---|---|
 | API | backend/app/main.py | health/status/stats/list/detail/sync/retry |
-| DB | backend/app/models.py | orders/complaints, migrations 0001–0004 trong cây nguồn |
+| DB | backend/app/models.py, schema_v1.py, backfill_v1.py | 13 bảng/203 cột, migration0005; local PostgreSQL17 đã nâng cấp và giữ dữ liệu cũ |
 | Pipeline | backend/app/services/sync.py | lưu email trước AI, extraction/verification/policy/retry/dedupe |
 | Gmail | backend/app/services/gmail.py | raw MIME, readonly, phân trang; chưa lưu thread/ảnh |
 | AI | backend/app/services/ai.py, gemini.py, groq_service.py | provider explicit, schema validation |
 | Policy | backend/app/services/policy.py | chỉ late-delivery shipping-refund, guard delivered cần refactor |
 | Frontend | frontend/src/App.tsx, api.ts, types.ts | list/filter/detail/sync/retry; chưa login/workflow/send/ảnh |
-| Local | docker-compose.yml | PostgreSQL17; chưa Dockerfile/cloud manifests lúc khảo sát |
+| Local | Dockerfile, docker-compose.app.yml, infra/ | React/FastAPI một URL8080 + PostgreSQL17; cloud scripts chưa thực thi tạo tài nguyên |
 
-## VERIFIED lịch sử và giới hạn
+## Kiểm chứng BASE ngày 14/11/2026
+
+- Trước thay đổi: 62 backend tests đạt. Sau BASE: 92 tests đạt trên PostgreSQL17; upgrade mới/cũ, backfill lặp và Alembic check đạt.
+- Backup custom-format mode0600 trong backend/.secrets/backups; migration thử trên database khôi phục trước khi nâng local0004→0005. Fingerprint toàn cột cũ của3 orders/7 complaints không đổi.
+- Docker build thành công bằng Node22/Python3.11; smoke GET UI/assets/API/DB/404 đạt; container tạm không AI/Gmail key vẫn boot/health và tôn trọng PORT9090.
+- Project claimpilot-513010 ACTIVE; preflight báo billing chưa hoạt động. Chỉ có script/config cloud, chưa Cloud SQL/Run/Secrets/Storage/Scheduler thật.
+- Chưa auth, Principal/CaseStore/harness, module shells hoặc workflow v3; pipeline cũ vẫn ghi projection legacy. A/B/C phải nối messages/runs/version/audit bằng nghiệp vụ mới; schema có sẵn không tự thực hiện luồng.
+- 78 test FS, live Google và ALL1 chưa được nghiệm thu. Chi tiết hiện hành trong [IMPLEMENTATION_REPORT](../IMPLEMENTATION_REPORT.md).
+
+## Lịch sử khảo sát trước BASE
 
 - Build frontend đạt; backend 31 passed/31 setup errors do không kết nối PostgreSQL trong phiên khảo sát, không toàn suite xanh.
 - Có gcloud CLI; chưa xác minh project/billing/IAM; chưa xác nhận DB current migration, Playwright/live Google/cloud trong đợt docs.
@@ -34,12 +43,12 @@ Một doanh nghiệp/Gmail/staff account và một đơn/hồ sơ, dữ liệu m
 
 ## Bắt đầu
 
-Database đã chốt **FROZEN_SPEC CLAIMPILOT_MVP_DB_V1**,13 bảng/203 cột tại DATABASE_DESIGN, có DB01–DB12 và quy tắc không tự ALTER sau BASE. Đây vẫn là TARGET: models/migration/thực thi DB chưa làm trong đợt docs; số pass lịch sử không chứng minh schema mới đã áp dụng.
+Database đã chốt **FROZEN_SPEC CLAIMPILOT_MVP_DB_V1**,13 bảng/203 cột tại DATABASE_DESIGN, có DB01–DB12 và quy tắc không tự ALTER sau BASE. Schema đã thành metadata/migration0005 và chạy local. Chỉ DB01/DB02/DB04 đã có evidence local; các gate nghiệp vụ/live/cloud còn thiếu, không suy ra từ 92 tests.
 
-Đọc AGENTS → context này → WORKFLOW → SHARED_CONTRACTS → TASK → task fullstack cá nhân. Đợt docs-only chưa chạy schema/cloud hoặc gửi thư. Xem CHANGELOG để biết thay đổi thiết kế; kiểm tra TASK để biết thực thi thật.
+Đọc AGENTS → context này → WORKFLOW → SHARED_CONTRACTS → TASK → task fullstack cá nhân. Đợt BASE đã chạy schema local/container; chưa cloud hoặc gửi thư. Xem CHANGELOG để biết thay đổi thiết kế; kiểm tra TASK để biết thực thi thật.
 
 ## Phân công v3 hiện hành
 
 A tự làm UI/API/DB/tests workspace/auth/intake/status và nền Cloud Run; B tự assessment/manual/text/policy/ảnh/GCS; C tự quyết định/composer/Gmail draft-send/lifecycle. Không còn A toàn backend/B toàn frontend/C toàn Google-cloud. [Shared contracts](SHARED_CONTRACTS.md) chốt BASE/ports/module owner/harness để ba người bắt đầu song song. Registry/migration aggregate A tích hợp, model/schema/business B/C tự viết theo frozen design.
 
-12 task FS + BASE/ALL1 trong TASK; 78 tests đã chuyển owner/ID; dòng “Mã cũ” trong mỗi test giữ thông tin đối chiếu, mốc MERGE/RELEASE. Không task slide/thuyết trình; dữ liệu mẫu tối thiểu chỉ fixture. Code/harness/deployment chưa thực hiện trong đợt docs-only này.
+12 task FS + BASE/ALL1 trong TASK; 78 tests đã chuyển owner/ID; dòng “Mã cũ” trong mỗi test giữ thông tin đối chiếu, mốc MERGE/RELEASE. Không task slide/thuyết trình; dữ liệu mẫu tối thiểu chỉ fixture. BASE DB/container đã có; harness/domain deployment và tính năng FS còn phải làm.

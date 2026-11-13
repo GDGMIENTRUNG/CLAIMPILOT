@@ -15,7 +15,22 @@ Kế hoạch build sản phẩm ngày 14/11/2026, 07:30–11:30: mỗi người 
 
 TARGET v3: Gmail → hồ sơ nhiều email → đánh giá/xác minh/ảnh → nhân viên quyết định → preview/edit → confirmed send hoặc draft → thực hiện ngoài app → close/reopen. Bắt buộc một URL Cloud Run cùng origin, Cloud SQL/Secrets/private Storage/Scheduler. Không auto-send theo AI/Scheduler hoặc tự refund.
 
-Đây là tài liệu cần triển khai: FS tasks vẫn TODO, tests NOT_RUN, BASE harness/module/cloud mới chưa có code. Hướng dẫn local bên dưới mô tả CURRENT và được giữ nguyên.
+BASE ngày 14/11 đã bổ sung models/schema 13 bảng/203 cột, migration `0005`, backfill và Docker một origin; database local đã nâng cấp, 92 backend tests đạt. FS tasks/harness/auth/Scheduler/send vẫn cần triển khai; 78 test nghiệm thu sản phẩm chưa được chạy. [Bằng chứng và giới hạn](IMPLEMENTATION_REPORT.md), [cấu hình Cloud Run chờ billing](docs/DEPLOYMENT.md).
+
+## Chạy một URL bằng Docker
+
+Giữ nguyên `.env` và `backend/.env` nếu đã cấu hình. Với máy mới, tạo hai file từ `.env.example` tương ứng trước. Backup DB có dữ liệu trước migration; không xóa volume.
+
+```sh
+docker-compose up -d db
+docker-compose -f docker-compose.yml -f docker-compose.app.yml build app
+docker-compose -f docker-compose.yml -f docker-compose.app.yml run --rm --no-deps app alembic upgrade head
+docker-compose -f docker-compose.yml -f docker-compose.app.yml up -d app
+```
+
+Mở http://localhost:8080; API http://localhost:8080/api/health. Container dùng DB hiện có, bind loopback, không tự migrate hoặc seed khi startup. API key chưa có vẫn mở UI/health được; `.env` không được đóng vào image. Cấu hình local nạp key/provider hiện có từ `backend/.env`; token OAuth local vẫn được giữ ở máy, chưa mount vào container mặc định. Dùng luồng local mục 3 nếu cần đọc Gmail trước khi A/C hoàn tất tích hợp cloud.
+
+Cloud Run: `bash infra/cloud-run.sh plan` xem cấu hình; `preflight` chỉ đọc trạng thái. Chưa deploy: project `claimpilot-513010` có billing chưa hoạt động. Cloud bootstrap giữ IAM private đến khi A làm đăng nhập.
 
 ## Yêu cầu
 

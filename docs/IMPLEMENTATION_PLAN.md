@@ -4,16 +4,16 @@
 
 Xây sản phẩm đúng WORKFLOW và release lên Google Cloud Run. A workspace/cloud, B assessment/evidence, C resolution/communication; mỗi người tự làm UI/API/DB/tests. Không có nhiệm vụ làm slide/thuyết trình/diễn tập. Fixtures và controlled Google checks vẫn cần để chứng minh sản phẩm hoạt động.
 
-Đợt hiện tại chỉ cập nhật docs; chưa tạo scaffold/code/migration/cloud. BASE dưới đây là đầu việc tương lai, không artifact đã tồn tại. Bốn giờ là mục tiêu, không bảo đảm quota/provisioning/merge tự thành công.
+Cập nhật14/11: BASE DB13 bảng/203 cột, migration0005/backfill/container/config cloud đã có và kiểm local; chưa auth/CaseStore/Principal/registry/harness, feature v3 hoặc cloud thật. BASE dưới đây chỉ làm phần còn thiếu, không dựng lại ứng dụng/database; xem IMPLEMENTATION_REPORT. Bốn giờ là mục tiêu, không bảo đảm quota/provisioning/merge tự thành công.
 
 ## Chuẩn bị BASE trước 07:30
 
-Schema khóa CLAIMPILOT_MVP_DB_V1: đủ13 bảng/203 cột trong DATABASE_DESIGN, dùng cho mốc 50%,80% và toàn MVP. Đầu ra BASE cần models/migration/backfill/fixtures đúng schema + DB01–DB12; đó là việc triển khai ban đầu, không hứa đang có sẵn vì docs xong. Sau BASE ba người chỉ viết business/CRUD trên schema, không tự thêm cột theo từng feature. Key/model đổi không đòi SQL.
+Schema khóa CLAIMPILOT_MVP_DB_V1: đủ13 bảng/203 cột trong DATABASE_DESIGN, dùng cho mốc 50%,80% và toàn MVP. Đầu ra BASE cần models/migration/backfill/fixtures đúng schema + DB01–DB12; models/migration/backfill đã làm và kiểm local0005; còn shared runtime/harness/fixtures hợp đồng và các gate nghiệp vụ/cloud. Sau BASE ba người chỉ viết business/CRUD trên schema, không tự thêm cột theo từng feature. Key/model đổi không đòi SQL.
 
 - Cả ba đọc WORKFLOW/schema/API/UI và SHARED_CONTRACTS; review dirty Git, chốt baseline chung, ba worktree. Không reset/commit hộ.
 - A tổng hợp core model fields/registry/CaseStore Protocol/Principal/client factory/migration outline, Cloud Run project/billing/IAM/APIs/SQL provisioning.
-- B tự chuẩn bị assessment/evidence models/DTO/env/deps, raw MIME/ảnh và order/message factories, probe text + Gemini ảnh/private bucket.
-- C tự chuẩn bị decisions/replies/operations models/DTO/env/deps, reply factories, OAuth compose quyền draft/send/reconcile.
+- B review assessment/evidence mappings có sẵn, tự chuẩn bị DTO/env/deps, raw MIME/ảnh và order/message factories, probe text + Gemini ảnh/private bucket.
+- C review decisions/replies/operations mappings có sẵn, tự chuẩn bị DTO/env/deps, reply factories, OAuth compose quyền draft/send/reconcile.
 - Chốt module shells và harness riêng từng domain; không bắt B/C chờ backend A xong. Real implementation ports ghép sau, production không fake.
 
 ## Lịch ghép sản phẩm

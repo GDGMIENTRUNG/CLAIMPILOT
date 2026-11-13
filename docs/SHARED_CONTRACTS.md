@@ -1,6 +1,6 @@
 # Hợp đồng chung để ba fullstack bắt đầu độc lập — TARGET v3
 
-Đây là đặc tả khung sẽ chuẩn bị trong BASE, chưa có code harness/module mới. Schema đã chốt là CLAIMPILOT_MVP_DB_V1 trong DATABASE_DESIGN (13 bảng); workflow v2/wire v3 được giữ, các field projection đọc thêm phải đồng bộ API. Contract-first không có nghĩa không có phụ thuộc: ba phần phát triển độc lập, sau đó ghép implementation thật.
+BASE DB/models/migration0005 và container đã triển khai local ngày14/11; code harness/module shells/Principal/CaseStore mới vẫn chưa có. Không viết lại models domain hoặc tạo migration riêng: dùng mappings trong backend/app/models.py và frozen snapshot schema_v1.py; phát triển DTO/services trong domain của mình. Schema đã chốt là CLAIMPILOT_MVP_DB_V1 trong DATABASE_DESIGN (13 bảng); workflow v2/wire v3 được giữ, các field projection đọc thêm phải đồng bộ API. Contract-first không có nghĩa không có phụ thuộc: ba phần phát triển độc lập, sau đó ghép implementation thật.
 
 ## Tổ chức module và file owner
 
@@ -17,7 +17,7 @@ Legacy files không bị xóa: A quản read/sync entrypoint, B tiếp nhận po
 
 ## BASE: artifact chung trước code song song
 
-Nhóm review hiện trạng Git và chốt một baseline có: toàn schema đích, enum/wire examples, domain directories/exports, DTO Protocols, test harness và dependency manifest. A tạo composition/primitives outline/migration aggregate; B/C tự chuẩn bị model/DTO/service signatures và fixture phần mình. Khi A đang triển khai runtime thật, B/C dùng test doubles đúng Protocol để làm UI→API→DB của phần mình.
+Nhóm review hiện trạng Git và chốt một baseline có: toàn schema đích, enum/wire examples, domain directories/exports, DTO Protocols, test harness và dependency manifest. DB/models/migration aggregate đã có; A còn composition/primitives outline. B/C review mappings sẵn có, chuẩn bị DTO/service signatures và fixture phần mình. Khi A đang triển khai runtime thật, B/C dùng test doubles đúng Protocol để làm UI→API→DB của phần mình.
 
 Harness chạy riêng từng domain với Session fixture, stub Principal/CaseStore/Google client có call counters; chỉ enable trong test app hoặc explicit development mode. Schema tạo bằng metadata chỉ trong test DB/schema tách biệt; production chỉ Alembic. Không coi harness là phần feature đã chạy thật. Migration cloud aggregate không cần hoàn thành trước khi B/C viết domain logic; field schema vẫn đã chốt.
 
@@ -46,12 +46,12 @@ Version tăng chỉ cho event ngữ cảnh trong WORKFLOW; reply save/reserve/st
 
 ## Schema, dependencies và thay đổi shared
 
-- A quản orders/complaints/core audit/messages/sessions/integration_state/gmail_intake_failures; B quản text_analysis_runs/evidence_assets/evidence_analyses; C quản complaint_decisions/case_replies/reply_operations. Mọi field/type/default/FK đã có ở DATABASE_DESIGN, cả ba chỉ ánh xạ model đúng dictionary trong BASE; không thêm field theo từng màn hình.
-- A phát hành migration aggregate một head từ ba metadata modules, FK vòng thêm sau; B/C tự test domain bằng frozen schema/harness, không phải chờ A viết routes/services.
+- A quản orders/complaints/core audit/messages/sessions/integration_state/gmail_intake_failures; B quản text_analysis_runs/evidence_assets/evidence_analyses; C quản complaint_decisions/case_replies/reply_operations. Mọi field/type/default/FK đã có ở DATABASE_DESIGN, cả ba dùng mappings đã có trong app/models.py (domain models.py chỉ re-export); không tạo metadata mới hoặc thêm field theo từng màn hình.
+- Migration aggregate0005 một head đã có từ snapshot metadata chung, gồm FK vòng; A giữ registry Base.metadata/models.py, B/C dùng lại trong test domain. Không tách lại thành ba metadata modules hoặc tạo migration mới để chia việc; không phải chờ A viết routes/services.
 - B khai báo AI/Storage/image dependencies/env, C khai báo Gmail write/reconcile dependencies/env; A tổng hợp lock/settings/Secret bindings trước merge. Không pip/npm upgrade chéo hoặc tạo requirements/lock cạnh tranh.
 - Shared change ghi DECISIONS + ảnh hưởng wire/schema/fixtures, owner tích hợp và báo cả ba; không tự đổi Protocol khiến feature khác không chạy.
 
-Schema gate: BASE dựng đủ13 bảng cho mọi mốc, B/C review model mapping, A aggregate migration đúng head thực tế; DB01–DB12 hiện NOT_RUN. Sau BASE không tự ALTER hoặc gửi schema delta bất ngờ. Chỉ có change request được nhóm thống nhất mới thay database. Text run lưu raw output từng lần, message.analysis là cache; intake fail trước parse nằm riêng, không tạo complaint giả. CaseStore xác thực mailbox/canonical alias và join transaction để sent/outbound/audit atomic. Các pointer cùng case/reply dùng composite FK, không chỉ service check.
+Schema gate: BASE dựng đủ13 bảng cho mọi mốc, B/C review model mapping, A aggregate migration đúng head thực tế; DB01/DB02/DB04 có evidence local; DB gates còn lại chưa đủ và DB12 cloud NOT_RUN. Xem IMPLEMENTATION_REPORT. Sau BASE không tự ALTER hoặc gửi schema delta bất ngờ. Chỉ có change request được nhóm thống nhất mới thay database. Text run lưu raw output từng lần, message.analysis là cache; intake fail trước parse nằm riêng, không tạo complaint giả. CaseStore xác thực mailbox/canonical alias và join transaction để sent/outbound/audit atomic. Các pointer cùng case/reply dùng composite FK, không chỉ service check.
 
 ## Ghép và chống production giả
 

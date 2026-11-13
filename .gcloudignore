@@ -1,0 +1,25 @@
+# Cloud Build uploads only the container source; no env, tokens or backups.
+.gcloudignore
+.git
+.git/**
+.env
+.env.*
+**/.env
+**/.env.*
+**/.secrets/**
+**/.venv/**
+**/node_modules/**
+**/dist/**
+**/__pycache__/**
+**/.pytest_cache/**
+**/test-results/**
+**/playwright-report/**
+**/*.dump
+**/*.log
+**/.DS_Store
+.DS_Store
+.agents/**
+.codex/**
+.aws/**
+infra/cloud-run.env
+docs/**

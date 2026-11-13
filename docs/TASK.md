@@ -4,11 +4,11 @@ A/B/C đều làm UI + API + dữ liệu + tests. Cloud Run là đích bắt bu�
 
 [BASE và interfaces](SHARED_CONTRACTS.md) được chốt chung trước phát triển song song; không chờ A hoàn thiện nghiệp vụ. Mã cũ chỉ đối chiếu ở dòng “Mã cũ” trong từng test case, không còn là task được giao.
 
-Database đã chốt đặc tả **CLAIMPILOT_MVP_DB_V1: 13 bảng** tại [DATABASE_DESIGN](DATABASE_DESIGN.md). BASE phải ánh xạ đủ schema/migration/fixtures và kiểm DB01–DB12 trước khóa baseline runtime; các gate hiện NOT_RUN. Sau BASE, FS tasks chỉ CRUD/business/UI trên schema này, không tự thêm bảng/cột khi lên mốc 50%/80%. Điều này không đánh dấu BASE hoặc feature đã xong.
+Database đã chốt đặc tả **CLAIMPILOT_MVP_DB_V1: 13 bảng** tại [DATABASE_DESIGN](DATABASE_DESIGN.md). Ngày14/11 đã có models/migration0005/backfill và container local; DB01/DB02/DB04 có evidence local, còn runtime/domain/cloud gates chưa đầy đủ. BASE vẫn IN_PROGRESS do chưa Principal/CaseStore/registry/harness/module shells. Sau BASE, FS tasks chỉ CRUD/business/UI trên schema này, không tự thêm bảng/cột khi lên mốc 50%/80%. Điều này không đánh dấu BASE hoặc feature đã xong.
 
 | ID | Owner | Đầu ra fullstack | Cần khi bắt đầu / lúc ghép | AC | Test | Status |
 |---|---|---|---|---|---|---|
-| BASE | A+B+C, A tổng hợp | Frozen schema/DTO, module shells, registry/harness, fixture hợp đồng | Git baseline review; không chờ feature | contracts + migration checks | bộ test theo từng owner | TODO |
+| BASE | A+B+C, A tổng hợp | DB0005/container/config cloud đã có; còn DTO/module shells/registry/CaseStore/harness | Review schema và code hiện có; không chờ feature | contracts + migration checks | 92 backend tests; FS chưa chạy | IN_PROGRESS |
 | FS-A1 | A | Auth/session/CSRF + LoginPage + shared api client | BASE; B/C dùng Principal stub lúc đầu | AC10 | [FS-A1](test-cases/A_TEST_CASES.md#fs-a1) | TODO |
 | FS-A2 | A | Gmail read/thread/dedupe, queues/conversation/technical queue, fixtures intake | BASE; gọi B assessment/evidence port qua doubles rồi real | AC02/07 | [FS-A2](test-cases/A_TEST_CASES.md#fs-a2) | TODO |
 | FS-A3 | A | Image/Cloud Run/SQL/Secrets, registry/core CaseStore, migration aggregate, health frontend/API | BASE; B/C schema/env manifests để aggregate lúc ghép | AC12 | [FS-A3](test-cases/A_TEST_CASES.md#fs-a3) | TODO |
@@ -29,6 +29,6 @@ TODO → IN_PROGRESS → REVIEW → VERIFIED; BLOCKED có nguyên nhân/người
 
 | Task | Commit/revision | Test IDs + thực tế | Mock/DB/browser/live/cloud | Owner/reviewer/blocker |
 |---|---|---|---|---|
-| — | — | Chưa thực hiện tính năng trong lần sửa docs | — | — |
+| BASE DB/container/config | feat/mvp-db-cloud-run-base (sau20ebb35); revision xem git log | 62 regression trước/92 sau; upgrade cũ/mới/repeat/drift + container smoke đạt | PostgreSQL17 local + container thật; AI/Gmail/cloud NOT_RUN | A+B+C review; billing chưa hoạt động; xem IMPLEMENTATION_REPORT |
 
 Không chờ task khác VERIFIED mới viết feature mình: dùng frozen contract/doubles trước; chỉ đánh dấu phần live còn thiếu đúng trạng thái. Không cộng số pass để che một test bắt buộc FAIL/BLOCKED/NOT_RUN. [Testing](TESTING_GUIDELINES.md), [prompt](AI_PROMPTS.md), [timeline](IMPLEMENTATION_PLAN.md).

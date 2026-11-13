@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-11-14 — BASE DB và container trên ứng dụng hiện có
+
+- Thêm schema snapshot13 bảng/203 cột,13 ORM mappings, migration0005 và repeat-safe legacy backfill; giữ IDs/body/tri-state/timestamps, không sửa migration0001–0004.
+- Backup trước thay đổi; thử clone và fresh database trước khi nâng local lên0005. Alembic check không drift; fingerprint3 orders/7 complaints giữ nguyên.
+- Thêm Docker Node22/Python3.11, SPA/API cùng origin, compose app8080, read-only OAuth refresh; .env/token cũ giữ nguyên và không đóng vào image.
+- Thêm cấu hình/scripts Cloud Run, private bucket/SQL/secrets/IAM/migration Job và grants tách runtime/migrator. Chỉ chuẩn bị; preflight project claimpilot-513010 ACTIVE, billing chưa hoạt động; không tạo tài nguyên cloud.
+- Regression62 trước/92 sau đều PASS;92 tests cũng đạt trong image Python3.11. Container HTTP/DB/boot không key và Chrome desktop/mobile đạt. Test FS/live/cloud chưa nghiệm thu. BASE vẫn IN_PROGRESS vì chưa harness/Principal/CaseStore/registry/module shells; không triển khai feature A/B/C trong đợt này.
+- Không gửi mail/call AI thật, không commit/push tự động. Xem IMPLEMENTATION_REPORT cho evidence và giới hạn.
+
 ## 2026-11-13 — khóa đặc tả database MVP
 
 - Chốt CLAIMPILOT_MVP_DB_V1 / FROZEN_SPEC:13 bảng/203 cột, dictionary type/null/default, enum, composite FK, unique/partial index và checks.
