@@ -13,6 +13,10 @@ from app.services.errors import IntegrationError
 
 SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
 def save_token(credentials):
+    # Secret Manager volumes are read-only. Refreshed access tokens remain in
+    # memory; the durable refresh token is still read from the mounted secret.
+    if settings.gmail_token_read_only:
+        return
     path = settings.token_path
     path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)

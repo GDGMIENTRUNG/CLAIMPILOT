@@ -72,3 +72,10 @@ def analyze_complaint(complaint_id: int, db: DB):
         return analyze_saved_complaint(db, record, get_ai_service())
     finally:
         sync_lock.release()
+
+
+# The same image serves the existing React UI and FastAPI on Cloud Run's PORT.
+# API routes must be registered before this catch-all mount.
+if (settings.frontend_dist / 'index.html').is_file():
+    from app.static import SPAStaticFiles
+    app.mount('/', SPAStaticFiles(directory=settings.frontend_dist, html=True), name='frontend')

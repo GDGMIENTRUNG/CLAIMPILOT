@@ -1,0 +1,20 @@
+# Optional same-origin app. Existing DB-only compose remains unchanged.
+# docker-compose -f docker-compose.yml -f docker-compose.app.yml up -d --build app
+services:
+  app:
+    build: .
+    image: claimpilot:local
+    env_file: backend/.env
+    environment:
+      # Use a password-free URL plus libpq's separate password field, allowing
+      # punctuation in the existing local password without URL interpolation.
+      DATABASE_URL: postgresql+psycopg://claimpilot@db:5432/claimpilot
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in root .env}
+      FRONTEND_ORIGIN: http://localhost:8080
+      GMAIL_TOKEN_PATH: /secrets/gmail/token.json
+      GMAIL_TOKEN_READ_ONLY: "true"
+      PORT: "8080"
+    ports: ["127.0.0.1:8080:8080"]
+    depends_on:
+      db:
+        condition: service_healthy

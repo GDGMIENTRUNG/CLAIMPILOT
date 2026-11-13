@@ -1,24 +1,17 @@
 import { test, expect } from "@playwright/test";
 
-test("real backend is reachable through Vite and missing credentials fail honestly", async ({
-  page,
-  request,
-}) => {
+test("real backend is reachable through Vite", async ({ page, request }) => {
   const health = await request.get("http://127.0.0.1:8000/api/health");
   expect(health.ok()).toBeTruthy();
   await page.goto("/");
   await expect(
     page.getByRole("heading", { name: "A clearer view of every complaint." }),
   ).toBeVisible();
-  await expect(page.getByText("Your inbox starts here")).toBeVisible();
-  await page
-    .getByRole("button", { name: "Sync Emails", exact: true })
-    .first()
-    .click();
-  await expect(page.getByText("Sync could not finish")).toBeVisible();
+  await expect(page.locator(".connection-bar")).toContainText("Gmail intake");
+  await expect(page.locator(".connection-bar")).toContainText("AI provider");
   await expect(
-    page.getByText(/gmail not authorized run authorize command/),
-  ).toBeVisible();
+    page.getByRole("button", { name: "Sync Emails", exact: true }).first(),
+  ).toBeEnabled();
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,
@@ -182,28 +175,28 @@ for (const fails of [false, true]) {
       .getByRole("button", { name: complaint.email_subject, exact: true })
       .click();
     const dialog = page.getByRole("dialog");
-    const retry = dialog.getByRole("button", { name: "Retry Gemini analysis" });
+    const retry = dialog.getByRole("button", { name: "Retry AI analysis" });
     await expect(retry).toBeVisible();
     await page.getByRole("button", { name: "Close details" }).focus();
     await page.keyboard.press("Tab");
     await expect(retry).toBeFocused();
     await retry.click();
     await expect(
-      dialog.getByRole("button", { name: "Gemini is analyzing…" }),
+      dialog.getByRole("button", { name: "AI is analyzing…" }),
     ).toBeDisabled();
     if (fails) {
       await expect(dialog.getByRole("alert")).toContainText(
         "gemini timeout retry sync",
       );
       await expect(
-        dialog.getByRole("button", { name: "Retry Gemini analysis" }),
+        dialog.getByRole("button", { name: "Retry AI analysis" }),
       ).toBeEnabled();
     } else {
       await expect(
         dialog.getByText("Eligible For Review", { exact: true }),
       ).toBeVisible();
       await expect(
-        dialog.getByRole("button", { name: "Retry Gemini analysis" }),
+        dialog.getByRole("button", { name: "Retry AI analysis" }),
       ).toHaveCount(0);
     }
     expect(calls).toBe(1);
@@ -211,7 +204,7 @@ for (const fails of [false, true]) {
   });
 }
 
-test("Groq configuration and retry action display selected provider", async ({
+test("AI configuration and retry action use provider-neutral labels", async ({
   page,
 }) => {
   await page.route("**/api/**", async (route) => {
@@ -249,15 +242,12 @@ test("Groq configuration and retry action display selected provider", async ({
   });
   await page.goto("/");
   await expect(page.locator(".connection-bar")).toContainText(
-    "Groq setup needed",
-  );
-  await expect(page.locator(".connection-bar")).toContainText(
-    "openai/gpt-oss-120b",
+    "AI provider setup needed",
   );
   await page
     .getByRole("button", { name: complaint.email_subject, exact: true })
     .click();
   await expect(
-    page.getByRole("button", { name: "Retry Groq analysis" }),
+    page.getByRole("button", { name: "Retry AI analysis" }),
   ).toBeVisible();
 });

@@ -107,6 +107,20 @@ def test_non_complaint_is_retained_but_hidden(db, client):
     assert gemini.analyze.call_count == 1
 
 
+def test_unclassified_failed_candidate_is_hidden(db, client):
+    record = Complaint(
+        **email('unclassified-notice'),
+        case_status='processing_failed',
+        processing_error='gemini_timeout_retry_sync',
+    )
+    db.add(record)
+    db.commit()
+    assert record.is_complaint is None
+    assert client.get('/api/complaints').json()['total'] == 0
+    assert client.get('/api/dashboard/stats').json()['total'] == 0
+    assert client.get(f'/api/complaints/{record.id}').status_code == 404
+
+
 def test_database_dedup_constraint(db):
     db.add(Complaint(**email()))
     db.commit()
@@ -181,7 +195,7 @@ def test_malformed_email():
 
 def test_stats_filters_and_detail(client, db):
     for i,status in enumerate(['pending_review','insufficient_information','processed','processing_failed']):
-        db.add(Complaint(**email(str(i)),case_status=status,complaint_type='late_delivery'))
+        db.add(Complaint(**email(str(i)),is_complaint=True,case_status=status,complaint_type='late_delivery'))
     db.commit()
     assert client.get('/api/dashboard/stats').json() == dict(total=4,pending_review=1,insufficient_information=1,processed=1)
     response = client.get('/api/complaints?case_status=pending_review&page_size=1')
