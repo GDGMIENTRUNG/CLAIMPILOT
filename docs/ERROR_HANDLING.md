@@ -30,6 +30,8 @@ API giữ detail string và thêm code stable; Pydantic validation 422 có thể
 - `scripts.reconcile_replies` (C triển khai) nhận reply UUID: dùng draft ID/sent ID nếu có, Message-ID ổn định, thread, người nhận và khoảng thời gian để tìm ứng viên. Một match chắc chắn → persist kết quả/audit; nhiều match hoặc không đủ căn cứ → giữ unknown. Không tìm thấy không chứng minh chưa gửi; không reset tự động.
 - Reset unknown về failed để thử lại chỉ do người vận hành xác nhận sau kiểm tra mailbox, ghi audit lý do; script không gửi email. Không thêm nút reset công khai MVP.
 
+Theo schema CLAIMPILOT_MVP_DB_V1, khi reset/reconcile phải cập nhật cả reply và reply_operations unsettled trong cùng UoW. Partial unique chặn cả in_progress và unknown; không chỉ đổi reply.status để lách khóa hoặc để operation unknown mồ côi. Parse/fetch lỗi trước case lưu gmail_intake_failures; sau recover message đã lưu thì resolve failure, lỗi AI tiếp theo lưu text_analysis_runs riêng.
+
 ## Snapshot và concurrency
 
 AI finish sau manual edit giữ kết quả gốc ở message nhưng không overwrite current projection. Evidence finish làm context stale; reply chưa gửi cần review. Gửi hoàn tất khi inbound mới vừa đến vẫn persist sent message nhưng giữ needs_review. Sửa quyết định không xóa history/outbound cũ.

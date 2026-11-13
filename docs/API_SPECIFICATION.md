@@ -30,17 +30,19 @@ Base `/api`, JSON UTF-8, UTC ISO8601; case ID int (complaint cũ), ID bảng m�
 
 **Message**: `id,gmail_message_id,gmail_thread_id?,direction,sender_email,recipient_email,subject,body,occurred_at,processing_status,processing_error?,analysis`. Raw OAuth/MIME không xuất ra client.
 
-**Decision**: `id,complaint_id,action,resolution,note,missing_fields:string[],actor,basis_case_version,assessment_snapshot,created_at`.
+**Decision**: `id,complaint_id,action,resolution,note,missing_fields:string[],actor,basis_case_version,assessment_snapshot,proposed_amount?,currency,created_at`. proposed_amount decimal string hoặc null, currency VND; server derive từ order, không nhận số tiền tùy ý từ client.
 
 **Reply**: `id,complaint_id,decision_id,in_reply_to_message_id,recipient_email,subject,body,status,basis_case_version,revision,is_stale,gmail_draft_id?,gmail_sent_message_id?,error_code?,sent_at?,updated_at`. Không trả attempt token/internal RFC ID. Reply response envelope `{reply:Reply,case_version:int}`.
 
-**AuditEvent**: `id,event_type,actor,note,before_data,after_data,created_at` đã lọc dữ liệu nhạy cảm. OrderOut thêm purchased_at/product_name/total_amount nullable.
+**AuditEvent**: `id,event_type,actor,note,before_data,after_data,created_at` đã lọc dữ liệu nhạy cảm. OrderOut thêm purchased_at/product_name/total_amount nullable và currency VND. CaseDetail thêm resolved_at/closed_by/close_note nullable và `fulfillment_details:{completed_at,completed_by,reference,note}` với từng field nullable; lấy từ các cột đã chốt, không tạo bảng payment hoặc fulfillment mới.
 
 ## Case list và dashboard
 
 - GET `/complaints` thêm `workflow_status?,queue?`; queue=work (mặc định, is_complaint=true) hoặc technical (is_complaint NULL/true và processing failed/pending, không chứa false). workflow filter chỉ lọc nghiệp vụ, không giấu lỗi phân tích đã xác nhận complaint.
+- Cả hai queue và counters chỉ tính canonical_case_id NULL. GET detail theo alias legacy resolve về canonical và trả ID/version canonical; các mutation resolve/lock/check version trên canonical. Staff được đọc candidate NULL trong technical queue để manual review; false không hiển thị như complaint. Không sửa cột is_complaint thành false chỉ để giấu legacy alias.
 - GET `/dashboard/stats` thêm `workflow_counts:{needs_review,waiting_customer,waiting_fulfillment,resolved,closed},technical_failed:int`. Legacy counters là projection theo DATABASE_DESIGN; UI mới dùng workflow_counts.
 - GET `/integrations/status` thêm `last_attempt_at?,last_success_at?,last_error_code?,deferred_count`. Presence credentials không chứng minh connectivity.
+- GET `/integrations/status` thêm intake_failed_count integer>=0. GET `/integrations/intake-failures` (staff auth) nhận page/page_size/status? và trả `{items:[{gmail_message_id,gmail_thread_id?,complaint_id?,error_code,status,attempt_count,first_seen_at,last_attempt_at,resolved_at?}],total,page,page_size}` từ gmail_intake_failures; chỉ metadata sanitized, không raw MIME. Technical UI có thể xem lỗi chưa tạo được case mà không dựng complaint giả; không public API reset/ignore trong MVP.
 - GET `/complaints/{id}/messages` → `{items:Message[]}`; GET `/complaints/{id}/decisions` → `{items:Decision[]}`; GET `/complaints/{id}/audit` → `{items:AuditEvent[]}`. Timeline dùng occurred_at/created_at, stable tie-break ID.
 
 ## Manual và reassessment
@@ -87,7 +89,7 @@ Gmail trả message ID → sent (không đồng nghĩa đã đọc/giao chắc c
 
 ## Evidence
 
-- GET `/complaints/{id}/evidence` → `{assets:[{id,source,message_id?,content_type,size_bytes,content_url}],analysis:EvidenceAnalysis|null}`; content_url `/api/evidence/{id}/content`, có auth, private/no-store.
+- GET `/complaints/{id}/evidence` → `{assets:[{id,source,evidence_kind,message_id?,content_type,size_bytes,content_url}],analysis:EvidenceAnalysis|null}`; content_url `/api/evidence/{id}/content`, có auth, private/no-store.
 - POST `/complaints/{id}/evidence/analyze` `{expected_case_version}` → `{analysis,case_version}`. Một phía vẫn chạy mode single_side; không ảnh 422 evidence_missing; đang pending 409 evidence_busy.
 - Analysis: `id,status,mode,consistency?,observations:string[],limitations:string[],missing_evidence:string[],model?,error_code?,created_at,completed_at?`. Single_side consistency phải inconclusive; không tuyên bố đã đối chiếu.
 - Tối đa 2 ảnh/phía/request, JPEG/PNG <=5 MB/ảnh; source customer gắn inbound message. Không UI upload trong MVP, ảnh lấy Gmail và seed order.
@@ -100,6 +102,12 @@ Các mã lỗi còn lại tại [ERROR_HANDLING](ERROR_HANDLING.md). Không hứ
 
 Closed từ chối review/decision/reply mutation với invalid_case_state cho tới reopen. Khi manual review/AI retry/reassess cập nhật projection phải tuân thủ rule không ghi đè sửa tay và context sent trong WORKFLOW. Recipient và headers luôn validate không CR/LF injection; subject cố định theo conversation.
 
+## Storage contract đã khóa
+
+Schema CLAIMPILOT_MVP_DB_V1 trong DATABASE_DESIGN là nguồn cột/type/default/FK. text_analysis_runs/gmail_intake_failures là lưu trữ nội bộ, không bắt thêm CRUD endpoint. Message.analysis vẫn projection raw đã apply; failed/stale attempts giữ ở runs, không overwrite manual values. case_replies.sent_message_id/attempt_token là pointer nội bộ, không xuất browser; gửi thành công cần sent ID/time/outbound trong cùng transaction.
+
+Phân tích ảnh vẫn trả shape ở trên; bucket/key/generation/dimensions là storage metadata nội bộ, proxy content đọc đúng generation đã lưu. Key/model/provider mới thay config/Secrets, không thay wire hoặc SQL. UI chưa triển khai phải cập nhật types cho những field đọc thêm, không dùng field chưa có trong schema khóa.
+
 ## Owner API và composition fullstack v3
 
 | Owner | API nghiệp vụ + frontend cùng owner |
@@ -109,3 +117,5 @@ Closed từ chối review/decision/reply mutation với invalid_case_state cho t
 | C Resolution | decisions/replies prepare-edit-review-draft-send/history/fulfillment/close/reopen; Decision/Composer/Fulfillment UI |
 
 A compose CaseDetail projection bằng read ports B/C đã chốt trong BASE, không import business write của B/C hoặc viết các router đó thay họ. Wire shape/HTTP/enum ở trên giữ nguyên. B/C tự tests UI/API/model bằng CaseContext/Session/Principal doubles trước; release thay bằng real shared runtime. Nội bộ [SHARED_CONTRACTS](SHARED_CONTRACTS.md), không tạo API phân tầng khác hoặc đổi tên field vì chia role mới.
+
+Evidence asset.evidence_kind đọc ra là packing/delivery/customer theo schema freeze; source order chỉ packing/delivery, source customer chỉ customer. Các field này phục vụ gắn nhãn bằng chứng, không là kết luận AI về việc giao hàng.

@@ -177,7 +177,6 @@ export default function App() {
       setVersion((v) => v + 1);
     }
   }
-  const providerName = integrations?.ai_provider === "groq" ? "Groq" : "Gemini";
   const providerConfigured =
     integrations?.ai_configured ?? integrations?.gemini_configured;
   const cards = [
@@ -286,14 +285,7 @@ export default function App() {
               <span className="divider" />
               <Sparkles size={16} />
               <span>
-                {providerName}{" "}
-                {providerConfigured ? "configured" : "setup needed"}
-                {integrations?.ai_model && (
-                  <span className="model-label">
-                    {" "}
-                    · {integrations.ai_model}
-                  </span>
-                )}
+                AI provider {providerConfigured ? "configured" : "setup needed"}
               </span>
             </div>
             <small>
@@ -650,13 +642,13 @@ export default function App() {
                             <Sparkles size={16} />
                           )}
                           {analyzingId === detail.id
-                            ? `${providerName} is analyzing…`
-                            : `Retry ${providerName} analysis`}
+                            ? "AI is analyzing…"
+                            : "Retry AI analysis"}
                         </button>
                         <p className="muted" aria-live="polite">
                           {analyzingId === detail.id
                             ? "Analyzing this saved email. Gmail is not being scanned."
-                            : `Runs only this saved email through ${providerName}, order verification, and the sample policy.`}
+                            : "Runs only this saved email through the configured AI provider, order verification, and the sample policy."}
                         </p>
                       </div>
                     )}

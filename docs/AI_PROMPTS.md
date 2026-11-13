@@ -14,6 +14,8 @@ Mỗi người một phiên/worktree, nhận một feature domain, không tự s
 
 ## BASE — cả ba chuẩn bị, A tổng hợp
 
+Schema đọc từ DATABASE_DESIGN, version CLAIMPILOT_MVP_DB_V1, 13 bảng. Không tự thiết kế lại hoặc bổ sung bảng/cột vì riêng task; ánh xạ đủ model/FK/default/index trong BASE, kiểm DB01–DB12, một Alembic head. Các gate còn NOT_RUN thì chưa báo baseline DB hoàn thành. Key/provider/model API cấu hình bên ngoài SQL.
+
 > Review dirty Git/baseline, chốt schema và module metadata/DTO/exports/config manifests. A chuẩn bị CaseStore/Principal/GoogleClientFactory Protocols, registry và migration outline. B/C tự chuẩn bị own module models/DTO/factories, dùng test doubles để bắt đầu fullstack. Không để dependency vào A business runtime chặn B/C. Worktree cùng baseline, không reset/commit hộ. Google project/billing/OAuth/quota do owner phần tương ứng kiểm tra trước release, không thêm nhiệm vụ thuyết trình.
 
 ## Tiếp tục phiên

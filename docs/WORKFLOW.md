@@ -2,6 +2,8 @@
 
 Đây là nguồn chuẩn enum nghiệp vụ. Một hồ sơ có nhiều messages, decisions, replies và audit events. Tên `complaints`/ID cũ được giữ để tương thích; UI gọi là hồ sơ. Một Gmail thread ↔ tối đa một hồ sơ trong mailbox demo. Một hồ sơ chọn một đơn; nhiều đơn/khác chủ đề được gắn needs_manual_review, không tự tách/gộp.
 
+Storage đã chốt CLAIMPILOT_MVP_DB_V1 tại DATABASE_DESIGN. Có thêm text_analysis_runs (processing/completed/failed/stale) cho lịch sử AI và gmail_intake_failures (pending/resolved/ignored) trước khi parse được message; các trạng thái này không thay workflow_status nghiệp vụ. Canonical alias dùng canonical_case_id, không giả là non-complaint. Các mốc 50%/80% dùng cùng schema13 bảng.
+
 ## Các trạng thái độc lập
 
 | Chiều | Enum | Ý nghĩa |
@@ -69,6 +71,10 @@ Quyết định không sửa/xóa: thêm quyết định mới và đánh dấu 
 - Reply sent là lịch sử và không có stale flag; case_version tăng vì fulfillment/close không buộc gửi lại thư. Context nghiệp vụ mới sau sent đưa hồ sơ needs_review; để giải quyết tiếp cần decision/reply mới. API review-context không sửa thư đã gửi.
 - Closed không cho review/decision/reply mới cho tới reopen (thủ công hoặc inbound). Reopen không tự gửi gì. Manual review xác nhận complaint cho candidate lỗi cho phép processing_status completed với nguồn manual, không báo AI đã thành công; raw message vẫn giữ processing_error gốc.
 - Không có network trong row-lock transaction. Serialize thay đổi case với bước reserve gửi; context đến sau reserve vẫn được lưu nhưng gắn cảnh báo concurrent_inbound. Không hứa hủy được email đã được Gmail nhận.
+
+## Metadata thực hiện và lưu lịch sử
+
+Fulfillment completed lưu time/actor/reference/note ở cột complaints đã chốt; audit/decision snapshot giữ các lần trước. resolved/closed có thời điểm và actor/lý do đóng. New inbound hoặc reopen clear closure/resolved timestamps để về needs_review, không tự đảo việc đã thực hiện. Quyết định mới reset current fulfillment completion fields nhưng giữ audit. C ghi sent reply/outbound message/operation result/audit atomic; B lưu mỗi attempt raw riêng, không dùng projection message.analysis như lịch sử duy nhất.
 
 ## Giới hạn có chủ đích
 

@@ -214,9 +214,9 @@
 - **Task / yêu cầu / AC:** FS-A2; FR02/FR10; AC02/AC04/AC07.
 - **Mốc bắt buộc:** MERGE.
 - **Loại kiểm tra:** mock Gmail/AI/PostgreSQL.
-- **Điều kiện / dữ liệu:** Thread từng false, candidate NULL failed, raw email lưu trước.
-- **Các bước:** Append reply mới có complaint; gọi classify; inject timeout và sau đó manual review.
-- **Kết quả mong đợi:** Không bỏ thread vĩnh viễn; tri-state được cập nhật theo dữ liệu mới; timeout vẫn giữ message, hiển thị technical queue/manual path, không tạo thành công giả.
+- **Điều kiện / dữ liệu:** Thread từng false, candidate NULL failed, raw email lưu trước; biến thể Gmail ID có nhưng fetch/parse chưa ra sender hợp lệ.
+- **Các bước:** Append reply mới có complaint; gọi classify; inject timeout và sau đó manual review. Với fetch/parse lỗi, kiểm intake failure/retry counter; sửa response rồi sync lại và kiểm resolved cùng transaction saved message.
+- **Kết quả mong đợi:** Không bỏ thread vĩnh viễn; tri-state cập nhật theo dữ liệu mới; timeout giữ message/manual path, không tạo thành công giả. Lỗi trước parse có gmail_intake_failures pending, không complaint giả; retry không nhân đôi failure row/message; recovery resolved có actor/time, đúng DB10.
 - **Kết quả thực tế:** Chưa chạy.
 - **Bằng chứng / commit / thời điểm / người kiểm tra:** Chưa có.
 - **Mã cũ (chỉ đối chiếu):** C2-T05.
@@ -243,8 +243,8 @@
 - **Mốc bắt buộc:** MERGE.
 - **Loại kiểm tra:** PostgreSQL/migration.
 - **Điều kiện / dữ liệu:** DB thử trống, env riêng; không dùng DB khách hàng.
-- **Các bước:** Chạy heads, upgrade head, current và alembic check; kiểm tra tables/FKs/indexes trong thiết kế.
-- **Kết quả mong đợi:** Một head; schema lên được; constraints có thật; ORM không drift; không có credential trong output lưu bằng chứng.
+- **Các bước:** Chạy heads, upgrade head, current và alembic check; đối chiếu đủ13 bảng/203 cột/types/defaults/nullability và FK/index với CLAIMPILOT_MVP_DB_V1; kiểm DB01–DB12 trong DATABASE_DESIGN.
+- **Kết quả mong đợi:** Một head; schema baseline đầy đủ dùng cho cả mốc 50%/80%; constraints có thật; ORM không drift; không có credential trong output lưu bằng chứng. Chỉ kiểm Markdown không được ghi PASS test PostgreSQL này.
 - **Kết quả thực tế:** Chưa chạy.
 - **Bằng chứng / commit / thời điểm / người kiểm tra:** Chưa có.
 - **Mã cũ (chỉ đối chiếu):** A0-T02.
@@ -269,8 +269,8 @@
 - **Mốc bắt buộc:** MERGE.
 - **Loại kiểm tra:** PostgreSQL.
 - **Điều kiện / dữ liệu:** DB thử đã migrate.
-- **Các bước:** Trong transaction riêng thử insert Gmail ID trùng, asset không owner hoặc hai owner, version âm và hai pending evidence cùng case.
-- **Kết quả mong đợi:** Constraint chặn dữ liệu sai; rollback sạch, dữ liệu hợp lệ vẫn lưu được; không chỉ kiểm ở UI.
+- **Các bước:** Trong transaction riêng thử Gmail ID trùng, asset không/hai owner, version âm, hai pending evidence; decision/message/run/operation ID thuộc case/reply khác; hai operation unsettled; sent thiếu outbound/time; request-info thiếu missing_fields; closure metadata thiếu.
+- **Kết quả mong đợi:** SQL chặn dữ liệu sai theo DB04/DB07/DB08, kể cả FK composite sai hồ sơ; rollback sạch và dữ liệu hợp lệ lưu được. Các rule cần đọc hướng message/owner snapshot được service kiểm riêng, không giả SQL CHECK kiểm được bảng khác. Mọi biến thể cần evidence.
 - **Kết quả thực tế:** Chưa chạy.
 - **Bằng chứng / commit / thời điểm / người kiểm tra:** Chưa có.
 - **Mã cũ (chỉ đối chiếu):** A0-T04.

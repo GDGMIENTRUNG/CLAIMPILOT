@@ -24,5 +24,6 @@
 - NFR06: UTC timestamps/ngày nghiệp vụ Asia/Ho_Chi_Minh, Decimal/string tiền.
 - NFR07: frozen schema/backfill/additive migration một head, không xóa dữ liệu cũ.
 - NFR08: isolated domain harness để ba fullstack bắt đầu song song; release Cloud Run cấm fake adapters/auth bypass.
+- NFR09: schema CLAIMPILOT_MVP_DB_V1 đủ13 bảng/203 cột trong BASE, FK cùng case/reply và gates DB01–DB12; không thay DDL trong FS task nếu chưa có change request thống nhất nhóm. FROZEN_SPEC không thay runtime migration checks.
 
 Enum [WORKFLOW](WORKFLOW.md), internal [SHARED_CONTRACTS](SHARED_CONTRACTS.md), wire/schema tại API/DATABASE, evidence [AC matrix](ACCEPTANCE_MATRIX.md). CURRENT chỉ phần được nêu ở CONTEXT; requirements mới chưa thành code vì docs đã xong. Không có requirement làm slide/thuyết trình.

@@ -24,5 +24,8 @@ Các quyết định hiện hành giữ workflow v2, thay phân công phân tầ
 | D18 | BASE ports/registry/harness trước feature | B/C bắt đầu độc lập với doubles test/dev; production không fake |
 | D19 | Một URL Google Cloud Run, A platform/B GCS-AI/C Gmail write | Giữ đơn giản deploy, không ba microservice/DB |
 | D20 | Không task thuyết trình, gate RELEASE | Giữ fixtures và acceptance như kiểm tra sản phẩm; mapping78 test giữ traceability |
+| D21 | Khóa CLAIMPILOT_MVP_DB_V1 gồm13 bảng | Một dictionary cho các mốc; BASE dựng đủ trước FS tasks, không tự thêm bảng/cột |
+| D22 | Tách text_analysis_runs và gmail_intake_failures | Giữ retries/failed/stale và lỗi trước parse, không bịa case hoặc ghi đè AI history |
+| D23 | FK composite + operation snapshots + immutable GCS refs | Chặn gắn sai hồ sơ, lưu đúng nội dung đã xác nhận, đọc đúng ảnh đã đánh giá; Gmail vẫn không exactly-once |
 
 Thay đổi sau: ghi ID/người quyết/thời điểm/lý do/docs-fixture ảnh hưởng, thông báo A/B/C trước merge. API/schema không đổi âm thầm, nhưng phát hiện thiếu thực tế phải được sửa có kiểm soát.

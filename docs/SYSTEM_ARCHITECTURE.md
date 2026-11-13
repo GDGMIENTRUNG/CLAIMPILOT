@@ -44,12 +44,16 @@ Cloud Run mặc định 1 instance, 1 worker, concurrency 8, memory 1Gi, timeout
 
 Cloud SQL lưu state; private Storage lưu ảnh; Secret Manager mount token readonly, refresh access token trong memory, không ghi mount. Frontend dùng relative /api, không credentials trong VITE env.
 
-Raw decoded email cap 25 MB; không log body. Ảnh JPEG/PNG <=5 MB/ảnh, decode có pixel cap 20 megapixel để tránh decompression bomb. B đọc metadata/size trước khi tải khi có thể; payload vượt cap lưu lỗi intake rõ thay vì vô hạn. Ảnh quá lớn không hủy phần text có thể đọc an toàn. Tối đa hai ảnh/phía/request AI: ảnh đơn mới nhất và ảnh khách từ inbound mới nhất có ảnh; thứ tự created_at/id ổn định, lưu asset_ids snapshot. Giao diện vẫn có thể xem metadata ảnh cũ.
+Raw decoded email cap 25 MB; không log body. Ảnh JPEG/PNG <=5 MB/ảnh, decode có pixel cap 20 megapixel để tránh decompression bomb. B đọc metadata/size trước khi tải khi có thể; payload vượt cap lưu lỗi intake rõ thay vì vô hạn. Ảnh quá lớn không hủy phần text có thể đọc an toàn. Tối đa hai ảnh/phía/request AI, chọn ảnh theo evidence_kind ở dưới; thứ tự created_at/id ổn định, lưu asset_ids snapshot. Giao diện vẫn có thể xem metadata ảnh cũ.
 
 Draft/sending operation quá 5 phút → unknown (không reset prepared). Evidence pending quá 5 phút → failed có retry. Mọi restart phải dựa DB để biết operation, không memory flag.
 
 ## Tổ chức fullstack và Cloud Run
 
+Schema chuẩn CLAIMPILOT_MVP_DB_V1 có13 bảng, giữ cả mốc 50%/80%/MVP. Text attempts ở text_analysis_runs; message.analysis là cache đã apply; Gmail lỗi trước parse ở gmail_intake_failures. Canonical aliases có FK riêng; reply/decision/message/operation được ràng buộc cùng hồ sơ. Đổi provider/model/key chỉ cấu hình, không schema. Xem DATABASE_DESIGN cho dictionary/constraints và DB01–DB12 trước khi triển khai BASE.
+
 Chọn modular monolith: ba domain workspace/assessment/resolution trong cùng image React/FastAPI và một Cloud Run service. A triển khai service/SQL/Secrets/Scheduler; B quản GCS/image/text adapters của assessment; C quản Gmail write/reconcile. Không ba microservice hoặc ba database để chia việc. Cả B/C dùng shared credential factory, không tranh sửa Gmail read module A.
 
 BASE chuẩn bị exports/registry/metadata facade/DTO/ports/test harness theo [SHARED_CONTRACTS](SHARED_CONTRACTS.md). B/C tự triển khai router/models/components/domain transactions, A chỉ aggregate migration/settings/lock và compose UI. Fake adapters/Principal chỉ isolated test app hoặc explicit development; production cấm fake/bypass auth, thiếu dịch vụ trả lỗi rõ. Core CaseStore lock/version/audit là primitive, policy thuộc B và reserve/complete gửi thuộc C. Chưa có code scaffold/harness mới trong đợt tài liệu.
+
+Schema freeze có evidence_kind packing/delivery/customer. Với ảnh đơn ưu tiên một packing mới nhất và một delivery mới nhất; chỉ có một kind thì lấy tối đa2ảnh mới nhất của kind đó. Ảnh khách lấy tối đa2ảnh từ inbound mới nhất có ảnh. Snapshot ổn định theo created_at/id; asset đọc đúng bucket/key/generation, không nhầm ảnh đóng gói với bằng chứng giao hàng.

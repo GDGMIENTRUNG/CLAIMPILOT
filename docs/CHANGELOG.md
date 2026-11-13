@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-11-13 — khóa đặc tả database MVP
+
+- Chốt CLAIMPILOT_MVP_DB_V1 / FROZEN_SPEC:13 bảng/203 cột, dictionary type/null/default, enum, composite FK, unique/partial index và checks.
+- Bổ sung text_analysis_runs/gmail_intake_failures, canonical alias và fulfillment/closure metadata; explicit confirmed operation snapshot, sent outbound FK, private GCS generation/size/dimensions.
+- Chốt cấu trúc JSON, transaction/version/idempotency, backfill dữ liệu cũ, DB01–DB12 và không ALTER riêng sau BASE. Các mốc 50%/80% dùng cùng baseline.
+- Đồng bộ API projections/technical failure read, task A/B/C/shared contracts, hướng dẫn AI/testing và overview; giữ78 test NOT_RUN, FS tasks TODO.
+- Chỉ sửa tài liệu, chưa tạo models/migration/scaffold, chưa migrate database hoặc deploy cloud trong đợt này.
+- Kiểm tra tĩnh dictionary: đủ13 bảng/203 cột,19 khai báo FK và 6 partial unique được dựng/compile qua SQLAlchemy PostgreSQL dialect trong script tạm, giữ tên cột ORM legacy. Đây không phải chạy DDL/DB01–DB12; database gates vẫn NOT_RUN.
+
 ## 2026-11-13 — dọn tài liệu chuyển tiếp
 
 - Xóa ba file task phân tầng cũ A_BACKEND/B_FRONTEND/C_INTEGRATIONS_CLOUD và DEMO_RUNBOOK đã chỉ còn trỏ sang tài liệu hiện hành.

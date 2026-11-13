@@ -13,6 +13,8 @@
 
 ## Schema, file và start độc lập
 
+Theo CLAIMPILOT_MVP_DB_V1, B ánh xạ text_analysis_runs/evidence_assets/evidence_analyses đúng dictionary trong BASE. Mỗi lần AI text có run riêng, failed/stale/raw outputs không ghi đè; message.analysis chỉ cache đã apply. Ảnh lưu bucket/key/generation/width/height/hash, decode rồi upload object mới và đọc đúng generation. Sau BASE chỉ business/CRUD/API/UI theo schema, không tự thêm cột/index/enum hoặc dùng JSON ngoài cấu trúc phần7 của DATABASE_DESIGN.
+
 Assessment/evidence module backend và feature frontend thuộc B; evidence tables B khai báo theo frozen DB; field core/order bổ sung gửi manifest BASE để A dựng một lần. B không tự mở migration head hoặc chỉnh main/App/shared config/lock cạnh tranh. Dependencies text/Storage/image decoder + env gửi A, A tích hợp common runtime.
 
 Domain harness: own model metadata/Session test, CaseStore fake đúng version/audit, Principal test, raw email/order/image factories, provider doubles. Thực hiện UI→router→DB phần mình trước; khi ghép đổi CaseStore/Google credentials thật. Không production auth bypass/mock fallback.

@@ -10,6 +10,8 @@
 
 Mỗi fullstack tự viết/chạy UI/API/DB tests phần mình. [BASE harness và ports](SHARED_CONTRACTS.md) cho phép dùng test doubles đúng contract khi domain khác chưa có runtime; không phải quyền chạy mocks trên Cloud Run release. Variants trong case cần kết quả từng biến thể, không PASS cả nhóm từ một happy path.
 
+Database khóa là CLAIMPILOT_MVP_DB_V1 trong [DATABASE_DESIGN](DATABASE_DESIGN.md):13 bảng/203 cột, DB01–DB12 hiện NOT_RUN. Bổ sung biến thể FK cùng case/reply, failed/stale runs, intake failures và closure metadata vào test hiện có, tổng vẫn78cases. BASE chỉ VERIFIED sau migration/backfill/constraint tests trên PostgreSQL, không từ việc file đặc tả đã chốt.
+
 ## Fixture chung và cách chạy tiết kiệm thời gian
 
 Mỗi test có DB/schema hoặc fixtures riêng; thời gian cố định D0=2026-11-14, occurred_at mặc định 03:00:00Z (10:00 Việt Nam). Ngày bên dưới tính theo D0, không theo clock máy chạy test. Email dùng DEMO_CUSTOMER_EMAIL/GMAIL_ACCOUNT_EMAIL nhóm kiểm soát qua env; không ghi địa chỉ/credentials thật vào tài liệu.

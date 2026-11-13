@@ -1,6 +1,6 @@
 # Hợp đồng chung để ba fullstack bắt đầu độc lập — TARGET v3
 
-Đây là đặc tả khung sẽ chuẩn bị trong BASE, chưa có code harness/module mới. Giữ schema/wire/nghiệp vụ v2; chỉ đổi tổ chức và trách nhiệm. Contract-first không có nghĩa không có phụ thuộc: ba phần phát triển độc lập, sau đó ghép implementation thật.
+Đây là đặc tả khung sẽ chuẩn bị trong BASE, chưa có code harness/module mới. Schema đã chốt là CLAIMPILOT_MVP_DB_V1 trong DATABASE_DESIGN (13 bảng); workflow v2/wire v3 được giữ, các field projection đọc thêm phải đồng bộ API. Contract-first không có nghĩa không có phụ thuộc: ba phần phát triển độc lập, sau đó ghép implementation thật.
 
 ## Tổ chức module và file owner
 
@@ -46,11 +46,15 @@ Version tăng chỉ cho event ngữ cảnh trong WORKFLOW; reply save/reserve/st
 
 ## Schema, dependencies và thay đổi shared
 
-- A quản orders/complaints/core audit/messages/sessions/integration_state metadata baseline; B quản evidence tables và specs field assessment/order bổ sung; C quản decisions/replies/operations và specs field lifecycle core. Root core columns được dựng một lần theo DATABASE_DESIGN, không ba người tự khai báo lại.
+- A quản orders/complaints/core audit/messages/sessions/integration_state/gmail_intake_failures; B quản text_analysis_runs/evidence_assets/evidence_analyses; C quản complaint_decisions/case_replies/reply_operations. Mọi field/type/default/FK đã có ở DATABASE_DESIGN, cả ba chỉ ánh xạ model đúng dictionary trong BASE; không thêm field theo từng màn hình.
 - A phát hành migration aggregate một head từ ba metadata modules, FK vòng thêm sau; B/C tự test domain bằng frozen schema/harness, không phải chờ A viết routes/services.
 - B khai báo AI/Storage/image dependencies/env, C khai báo Gmail write/reconcile dependencies/env; A tổng hợp lock/settings/Secret bindings trước merge. Không pip/npm upgrade chéo hoặc tạo requirements/lock cạnh tranh.
 - Shared change ghi DECISIONS + ảnh hưởng wire/schema/fixtures, owner tích hợp và báo cả ba; không tự đổi Protocol khiến feature khác không chạy.
 
+Schema gate: BASE dựng đủ13 bảng cho mọi mốc, B/C review model mapping, A aggregate migration đúng head thực tế; DB01–DB12 hiện NOT_RUN. Sau BASE không tự ALTER hoặc gửi schema delta bất ngờ. Chỉ có change request được nhóm thống nhất mới thay database. Text run lưu raw output từng lần, message.analysis là cache; intake fail trước parse nằm riêng, không tạo complaint giả. CaseStore xác thực mailbox/canonical alias và join transaction để sent/outbound/audit atomic. Các pointer cùng case/reply dùng composite FK, không chỉ service check.
+
 ## Ghép và chống production giả
 
 Mỗi owner giao UI/API/models/tests cùng nhau. Hợp nhất BASE + cả ba domain qua shared contracts, không theo thứ tự backend→frontend. Mock adapters chỉ tests/dev; Cloud Run release khởi động thất bại rõ nếu config fake/bypass auth. Nếu real service chưa sẵn thì trả lỗi/BLOCKED đúng, không gọi mock fallback. Không gọi send từ event hook sync/AI.
+
+CaseStore chịu trách nhiệm clear resolved_at/closed_at/closed_by/close_note khi một event hợp lệ đưa workflow về needs_review; B chỉ yêu cầu mutation theo quyền, không cần tự sửa closure của C để vượt CHECK. Fulfillment completion cũ được giữ tới decision mới rồi reset theo WORKFLOW, audit giữ kết quả trước. Không dùng cache projection thay lịch sử text runs.

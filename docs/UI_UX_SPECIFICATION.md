@@ -71,3 +71,9 @@ Label/validation từng field, keyboard tới mọi action, focus sau navigate/c
 ## Quyền sở hữu fullstack
 
 A làm WorkspaceShell/Login/queues/conversation/SyncStatus và API/dữ liệu tương ứng; B tự Assessment/ManualReview/Evidence cùng router/models/providers; C tự Decision/ReplyComposer/Fulfillment/History cùng router/models/Gmail write. Không còn B viết toàn frontend. BASE chốt feature slots/props `{caseId,onCaseChanged}`; A compose ba panel, domain UI tự fetch API own, cùng shared api client/session contract. Mỗi panel loading/error độc lập, event invalidate không tự gửi lại mutation. Không task làm slide/diễn tập trong UI backlog.
+
+Schema CLAIMPILOT_MVP_DB_V1 đã có fulfillment/closure actor/time/reference/note, proposed_amount/currency, lịch sử text runs và intake failures. UI đọc API projection, không yêu cầu agent tự thêm cột cho timeline hoặc trạng thái. Lỗi fetch/parse chưa có case hiển thị metadata sanitized từ integrations/intake-failures trong vùng lỗi, không mở detail complaint giả; AI run history là lưu trữ nội bộ, không bắt thêm màn hình debug AI.
+
+Số tiền đề xuất chỉ hiển thị khi có căn cứ từ order và decision.proposed_amount; currency VND. Total amount chưa biết thì không tự điền0/ước đoán hoặc hứa đã hoàn tiền. Dữ liệu thực hiện/đóng lấy timestamp/actor/reference/note theo API, timeline giữ các lần trước qua audit.
+
+Ảnh đơn dùng evidence_kind packing/delivery để gắn nhãn “Ảnh đóng gói” hoặc “Ảnh giao hàng”; ảnh khách kind customer. Không suy ra giai đoạn chỉ từ thời điểm upload và không dùng ảnh đóng gói để khẳng định đã giao thành công.

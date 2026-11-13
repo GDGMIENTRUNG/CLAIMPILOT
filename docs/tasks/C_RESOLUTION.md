@@ -13,6 +13,8 @@
 
 ## File, schema và independent harness
 
+Theo CLAIMPILOT_MVP_DB_V1, C ánh xạ decisions/replies/operations đúng dictionary từ BASE; dùng composite FK cùng case/reply. Reserve lưu immutable request_snapshot, confirmed_at/by, idempotency và unsettled partial unique; completion cần outbound+sent_message_id+sent_at cùng transaction. Fulfillment/closure metadata đã có cột trên complaints, không thêm bảng hoặc field JSON tùy ý lúc code. Không migration/ALTER riêng sau BASE; key/model mới chỉ config.
+
 Resolution module backend + frontend thuộc C; decisions/replies/operations metadata C viết theo DB chốt. Field lifecycle core được khai báo trong BASE; A aggregate migration/settings/lock theo manifest C. Không sửa main/App/models/config trực tiếp cùng A/B.
 
 Dùng own decision/reply/operation factories, CaseContext verified/unknown versions, fake CaseStore/Google client và Principal trong isolated test app; không cần A sync hoặc B UI để viết/test fullstack. Khi ghép nối primitive append outbound/UoW thật; B snapshot thật chỉ cần đúng contract, C không import ORM B.

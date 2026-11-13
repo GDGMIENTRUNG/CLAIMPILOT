@@ -33,3 +33,5 @@ Storage private, uniform access và public access prevention. API auth proxy con
 Runtime SA least privilege: SQL Client, từng Secret Accessor, bucket object access; secrets ngoài image/frontend/build args. SQL qua connector/Unix socket, không mở mọi IP. Public web route không có nghĩa internal route được public quyền: OIDC verify signature/issuer/audience/email_verified/allowlist, không decode-only.
 
 Audit actor từ session/system job, ghi cùng business transaction; before/after được lọc, không log raw customer PII. Không có API sửa/xóa decisions/audit. Demo dùng dữ liệu giả, logs chỉ IDs/code/duration. Retention và RBAC production để sau, không tuyên bố sẵn sàng vận hành khách thật.
+
+Database theo CLAIMPILOT_MVP_DB_V1: không token/key/password gốc trong SQL; request_snapshot chứa nội dung thư nội bộ nên chỉ staff/role runtime đúng quyền được đọc, không log snapshot. Runtime không DDL hoặc sửa/xóa decisions/audit; migration job quyền riêng. Schema metadata freeze không thay cho kiểm tra quyền thực tế trên Cloud SQL.

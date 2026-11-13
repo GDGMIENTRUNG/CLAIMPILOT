@@ -13,6 +13,8 @@
 
 ## Sản phẩm/hợp đồng/chất lượng
 
+**Database đã chốt:** [CLAIMPILOT_MVP_DB_V1](DATABASE_DESIGN.md),13 bảng/203 cột cho mốc 50%/80%/MVP, đầy đủ dictionary/FK/index/transaction/backfill; trạng thái FROZEN_SPEC, DB gates vẫn NOT_RUN. Sau BASE, A/B/C dùng schema chung, không tự thêm bảng/cột theo task.
+
 - [PRD](PRD.md), [SRS](SRS.md), [WORKFLOW](WORKFLOW.md), [architecture](SYSTEM_ARCHITECTURE.md).
 - [Shared ports/file owner](SHARED_CONTRACTS.md), [database](DATABASE_DESIGN.md), [API](API_SPECIFICATION.md), [UI/UX](UI_UX_SPECIFICATION.md), [sáu features](FEATURE_SPECIFICATION.md).
 - [Coding](CODING_CONVENTIONS.md), [errors](ERROR_HANDLING.md), [security](SECURITY.md), [deployment Cloud Run](DEPLOYMENT.md).

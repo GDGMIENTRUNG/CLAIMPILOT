@@ -34,6 +34,8 @@ Một doanh nghiệp/Gmail/staff account và một đơn/hồ sơ, dữ liệu m
 
 ## Bắt đầu
 
+Database đã chốt **FROZEN_SPEC CLAIMPILOT_MVP_DB_V1**,13 bảng/203 cột tại DATABASE_DESIGN, có DB01–DB12 và quy tắc không tự ALTER sau BASE. Đây vẫn là TARGET: models/migration/thực thi DB chưa làm trong đợt docs; số pass lịch sử không chứng minh schema mới đã áp dụng.
+
 Đọc AGENTS → context này → WORKFLOW → SHARED_CONTRACTS → TASK → task fullstack cá nhân. Đợt docs-only chưa chạy schema/cloud hoặc gửi thư. Xem CHANGELOG để biết thay đổi thiết kế; kiểm tra TASK để biết thực thi thật.
 
 ## Phân công v3 hiện hành

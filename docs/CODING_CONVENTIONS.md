@@ -16,3 +16,4 @@
 - Tách domain theo SHARED_CONTRACTS: workspace/assessment/resolution exports cố định trong BASE, legacy facades giữ tương thích; không cùng chỉnh App/main/models/config monolithic.
 - CaseStore UoW shared được join bởi domain write; B/C sở hữu rule/reserve-complete tương ứng, không lấy ORM domain khác thay CaseContext snapshot.
 - Mocks/Principal stub chỉ test/dev; release startup cấm fake adapter/auth bypass, không return fake success khi dịch vụ chưa cấu hình. Một image/URL Cloud Run, không chia microservice theo developer.
+- Schema khóa CLAIMPILOT_MVP_DB_V1: ORM phải đúng type/null/default/composite ForeignKeyConstraint/partial indexes trong DATABASE_DESIGN. BASE dựng đủ13 bảng một lần, mốc 50%/80% không tự thêm cột. JSON có schema cố định; key/model/provider thay config, không thêm field SQL theo nhà cung cấp.

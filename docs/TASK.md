@@ -4,6 +4,8 @@ A/B/C đều làm UI + API + dữ liệu + tests. Cloud Run là đích bắt bu�
 
 [BASE và interfaces](SHARED_CONTRACTS.md) được chốt chung trước phát triển song song; không chờ A hoàn thiện nghiệp vụ. Mã cũ chỉ đối chiếu ở dòng “Mã cũ” trong từng test case, không còn là task được giao.
 
+Database đã chốt đặc tả **CLAIMPILOT_MVP_DB_V1: 13 bảng** tại [DATABASE_DESIGN](DATABASE_DESIGN.md). BASE phải ánh xạ đủ schema/migration/fixtures và kiểm DB01–DB12 trước khóa baseline runtime; các gate hiện NOT_RUN. Sau BASE, FS tasks chỉ CRUD/business/UI trên schema này, không tự thêm bảng/cột khi lên mốc 50%/80%. Điều này không đánh dấu BASE hoặc feature đã xong.
+
 | ID | Owner | Đầu ra fullstack | Cần khi bắt đầu / lúc ghép | AC | Test | Status |
 |---|---|---|---|---|---|---|
 | BASE | A+B+C, A tổng hợp | Frozen schema/DTO, module shells, registry/harness, fixture hợp đồng | Git baseline review; không chờ feature | contracts + migration checks | bộ test theo từng owner | TODO |

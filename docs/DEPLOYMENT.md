@@ -49,6 +49,8 @@ A tích hợp config/env/dependency manifests từ B assessment và C resolution
 
 ## 4. Deploy theo thứ tự
 
+Database baseline phát hành phải khớp CLAIMPILOT_MVP_DB_V1 (13 bảng), DB01–DB12 và metadata ba domain đã review; không deploy thiếu bảng B/C rồi ALTER lẻ trong startup. Một migration job có quyền DDL; runtime dùng quyền DML giới hạn, không DDL. Secrets/mode provider do cấu hình, không thêm cột khi nhận key ban tổ chức.
+
 1. Build/push image theo commit/digest, không dùng latest làm bằng chứng.
 2. Run Job cùng image/SA/SQL/secrets chạy alembic upgrade head trong backend; đợi exit0, một head. Migration/backfill thử trên old-data fixture trước; không chạy startup mọi instance.
 3. Seed CPDEMO bằng Job riêng, upload ảnh giả private; không public seed/reset endpoint. Mail thật không được sinh bởi seed.

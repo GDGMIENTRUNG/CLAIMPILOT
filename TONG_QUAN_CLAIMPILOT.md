@@ -176,6 +176,8 @@ Chi tiết: [task C](docs/tasks/C_RESOLUTION.md), [27 test case C](docs/test-cas
 
 ## 6. Cách ba người làm song song và ghép sản phẩm
 
+Database chuẩn là **CLAIMPILOT_MVP_DB_V1**,13 bảng đã chốt trong [DATABASE_DESIGN](docs/DATABASE_DESIGN.md). BASE triển khai đủ models/migration một lần để cả mốc 50% và 80% dùng chung; A/B/C sau đó chỉ code business/CRUD trên schema. DB01–DB12 phải kiểm thật trước khi báo database sẵn sàng; hiện mới FROZEN_SPEC, chưa migrate.
+
 1. **Chốt nền chung trước:** schema, API/DTO, trạng thái, interface gọi chéo, khung module và dữ liệu kiểm thử. Phần chuẩn bị này gọi là BASE.
 2. **Mỗi người một nhánh/worktree:** làm UI/API/models/tests trong module mình, không cùng sửa các file entrypoint lớn.
 3. **Dùng hợp đồng để bắt đầu độc lập:** khi runtime phần khác chưa có, dùng test doubles đúng interface trong môi trường test/development. Đây không phải chức năng thật đã hoàn thành.

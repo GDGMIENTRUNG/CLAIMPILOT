@@ -233,7 +233,7 @@
 - **Loại kiểm tra:** API/PostgreSQL; provider mock.
 - **Điều kiện / dữ liệu:** Candidate NULL bị timeout, raw message có processing_error; mock AI có barrier.
 - **Các bước:** Confirm complaint/manual order/type; reassess không gọi AI; hoàn tất AI cũ hoặc retry với dữ liệu khác.
-- **Kết quả mong đợi:** Manual xử lý tiếp được; data_source=manual, raw AI/error gốc giữ; late completion không ghi đè manual override hoặc version mới.
+- **Kết quả mong đợi:** Manual xử lý tiếp được; data_source=manual, raw AI/error gốc giữ; mỗi attempt có text_analysis_runs riêng, failed/stale không bị xóa; late completion giữ output nhưng không apply/current pointer/ghi đè manual override hoặc version mới, applied_case_version=NULL. Kiểm DB06 trong DATABASE_DESIGN.
 - **Kết quả thực tế:** Chưa chạy.
 - **Bằng chứng / commit / thời điểm / người kiểm tra:** Chưa có.
 - **Mã cũ (chỉ đối chiếu):** A3-T04.

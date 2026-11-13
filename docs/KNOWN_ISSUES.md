@@ -20,5 +20,6 @@
 | K16 | Polling bounded có độ trễ/backlog | A UI last_success/deferred/cursor rõ |
 | K17 | Code hiện tại monolithic main/App/models dễ conflict | BASE module shells/registries và file owner theo SHARED_CONTRACTS |
 | K18 | Harness/interfaces chỉ là thiết kế chưa code | Chốt BASE trước phát triển; không nói B/C đã chạy độc lập khi chưa có artifact |
+| K19 | Database mới chỉ FROZEN_SPEC, chưa models/migrate/checks runtime | BASE triển khai CLAIMPILOT_MVP_DB_V1 đủ13 bảng/203 cột và DB01–DB12; không tự ALTER trong từng feature |
 
 Docs không giải quyết các lỗi bằng code. Thiếu Google/cloud là BLOCKED đúng phần, không mock production. Phân tầng owner cũ hết hiệu lực; tìm dòng “Mã cũ” trong ba bộ test fullstack nếu nhận bàn giao mã cũ.

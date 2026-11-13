@@ -13,6 +13,8 @@
 
 ## File owner và interface
 
+Database khóa là CLAIMPILOT_MVP_DB_V1: A tổng hợp đủ13 bảng trong BASE, kiểm DB01–DB12, chưa pass thì không báo DB sẵn sàng. A sở hữu thêm gmail_intake_failures và canonical aliases; không tạo hồ sơ giả khi parse lỗi. B/C ánh xạ metadata đúng dictionary, sau BASE không gửi schema delta bất ngờ khi làm feature. Không tự ALTER/DROP hoặc migration head mới trong FS task.
+
 Backend module workspace và shared primitives/composition, frontend feature workspace/shared shell; cloud artifacts/settings/lock/migration aggregate do A tích hợp. Legacy main/App/models/config/api helper là điểm tích hợp một owner, domain B/C không sửa cạnh tranh. Chốt imports/feature slots trong BASE.
 
 A append inbound/audit/version/reopen trong core UoW không cần gọi service lifecycle C mới lưu được thư. A không implement policy/ảnh/send thay B/C; dùng B.analyze_message/B.ingest_message, C append outbound dùng A primitive. Shared Google factory quản token, read-only mount refresh memory; Gmail write module do C.

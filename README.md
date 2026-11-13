@@ -23,7 +23,7 @@ TARGET v3: Gmail → hồ sơ nhiều email → đánh giá/xác minh/ảnh → 
 - Node.js 22+
 - Docker và Docker Compose
 - Google Cloud OAuth Client loại **Desktop app**
-- Gemini API key
+- Gemini API key; có thể dùng Groq tạm thời trong quá trình phát triển
 
 ## 1. Cấu hình
 
@@ -39,8 +39,8 @@ Cập nhật:
 - `POSTGRES_PASSWORD` trong `.env`.
 - `DATABASE_URL` trong `backend/.env` với cùng mật khẩu.
 - `GOOGLE_CLIENT_ID` và `GOOGLE_CLIENT_SECRET`.
-- `GEMINI_API_KEY` và model Gemini khả dụng với tài khoản.
-- `AI_PROVIDER=gemini`.
+- Với cấu hình chính: đặt `GEMINI_API_KEY`, model khả dụng và `AI_PROVIDER=gemini`.
+- Nếu hạn mức Gemini chưa sẵn sàng: đặt `GROQ_API_KEY` và `AI_PROVIDER=groq` để kiểm thử tạm thời.
 
 Không commit `.env`, API key hoặc `backend/.secrets/` lên Git.
 
@@ -96,17 +96,17 @@ Mở http://localhost:5173.
 2. Email nên chứa mã đơn như `DH001`, `DH002` hoặc `DH003`.
 3. Mở dashboard và bấm **Sync Emails**.
 4. Chọn complaint để xem email gốc, phân tích AI, đơn hàng xác minh và kết quả chính sách.
-5. Nếu AI lỗi, mở complaint và bấm **Retry Gemini analysis**.
+5. Nếu AI lỗi, mở complaint và bấm **Retry AI analysis**.
 
 Mỗi lần sync xử lý tối đa số thư trong `GMAIL_BATCH_SIZE`. `GMAIL_QUERY` lọc các ứng viên có dấu hiệu phàn nàn; AI tiếp tục xác định email có thực sự là complaint hay không rồi mới phân loại thành Late Delivery, Not Received, Damaged Item, Wrong Item, Refund Request hoặc Other. Thư quảng cáo và thư không liên quan được ghi nhận để tránh xử lý lặp lại nhưng không xuất hiện trên dashboard.
 
 ## Dữ liệu mẫu
 
-| Đơn hàng | Email khách hàng | Trạng thái |
-| --- | --- | --- |
-| DH001 | hang290806@gmail.com | Đã giao trễ |
-| DH002 | phannhungoc2k@gmail.com | Đã giao đúng hạn |
-| DH003 | donchick24@gmail.com | Chưa xác nhận giao |
+| Đơn hàng | Email khách hàng        | Trạng thái         |
+| -------- | ----------------------- | ------------------ |
+| DH001    | hang290806@gmail.com    | Đã giao trễ        |
+| DH002    | phannhungoc2k@gmail.com | Đã giao đúng hạn   |
+| DH003    | donchick24@gmail.com    | Chưa xác nhận giao |
 
 Email người gửi phải trùng email khách hàng của đơn; nếu không, hệ thống yêu cầu nhân viên xác minh quyền sở hữu.
 
@@ -131,6 +131,8 @@ npm run test:e2e
 ```
 
 Các dịch vụ Google được mock trong kiểm thử tự động. Kết nối Gmail/Gemini thật cần kiểm tra thủ công.
+
+Gemini là provider AI chính theo thiết kế của ClaimPilot. Adapter Groq được giữ làm phương án tạm thời cho phát triển và kiểm thử khi hạn mức Gemini chưa sẵn sàng. Giao diện dùng nhãn trung lập **AI-powered analysis**; API trạng thái vẫn báo đúng provider và model đang chạy.
 
 ## Dừng ứng dụng
 

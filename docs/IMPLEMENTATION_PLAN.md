@@ -8,6 +8,8 @@ Xây sản phẩm đúng WORKFLOW và release lên Google Cloud Run. A workspace
 
 ## Chuẩn bị BASE trước 07:30
 
+Schema khóa CLAIMPILOT_MVP_DB_V1: đủ13 bảng/203 cột trong DATABASE_DESIGN, dùng cho mốc 50%,80% và toàn MVP. Đầu ra BASE cần models/migration/backfill/fixtures đúng schema + DB01–DB12; đó là việc triển khai ban đầu, không hứa đang có sẵn vì docs xong. Sau BASE ba người chỉ viết business/CRUD trên schema, không tự thêm cột theo từng feature. Key/model đổi không đòi SQL.
+
 - Cả ba đọc WORKFLOW/schema/API/UI và SHARED_CONTRACTS; review dirty Git, chốt baseline chung, ba worktree. Không reset/commit hộ.
 - A tổng hợp core model fields/registry/CaseStore Protocol/Principal/client factory/migration outline, Cloud Run project/billing/IAM/APIs/SQL provisioning.
 - B tự chuẩn bị assessment/evidence models/DTO/env/deps, raw MIME/ảnh và order/message factories, probe text + Gemini ảnh/private bucket.
