@@ -4,6 +4,19 @@ ClaimPilot là ứng dụng nội bộ đọc email khiếu nại từ Gmail, d�
 
 > Ứng dụng không tự gửi email, hoàn tiền hoặc thực hiện giao dịch.
 
+## Tài liệu SDD v3 — ba phần fullstack, Google Cloud Run
+
+Kế hoạch build sản phẩm ngày 14/11/2026, 07:30–11:30: mỗi người tự UI/API/dữ liệu/tests theo luồng, không chia người backend/frontend/tích hợp và không task thuyết trình.
+
+- [Bản đồ docs](docs/README.md), [hiện trạng](docs/CONTEXT.md), [luồng chuẩn](docs/WORKFLOW.md), [timeline](docs/IMPLEMENTATION_PLAN.md).
+- [Task tổng](docs/TASK.md): [A Workspace + Cloud Run](docs/tasks/A_WORKSPACE.md), [B Assessment + Evidence](docs/tasks/B_ASSESSMENT.md), [C Resolution + Communication](docs/tasks/C_RESOLUTION.md).
+- AI đọc [AGENTS](AGENTS.md), [BASE/ports/module owner](docs/SHARED_CONTRACTS.md), [API](docs/API_SPECIFICATION.md), [database](docs/DATABASE_DESIGN.md), [UI/UX](docs/UI_UX_SPECIFICATION.md), [prompt](docs/AI_PROMPTS.md).
+- Test fullstack [A32](docs/test-cases/A_TEST_CASES.md), [B19](docs/test-cases/B_TEST_CASES.md), [C27](docs/test-cases/C_TEST_CASES.md); [AC01–AC12](docs/ACCEPTANCE_MATRIX.md), [release checklist](docs/RELEASE_CHECKLIST.md).
+
+TARGET v3: Gmail → hồ sơ nhiều email → đánh giá/xác minh/ảnh → nhân viên quyết định → preview/edit → confirmed send hoặc draft → thực hiện ngoài app → close/reopen. Bắt buộc một URL Cloud Run cùng origin, Cloud SQL/Secrets/private Storage/Scheduler. Không auto-send theo AI/Scheduler hoặc tự refund.
+
+Đây là tài liệu cần triển khai: FS tasks vẫn TODO, tests NOT_RUN, BASE harness/module/cloud mới chưa có code. Hướng dẫn local bên dưới mô tả CURRENT và được giữ nguyên.
+
 ## Yêu cầu
 
 - Python 3.11+
