@@ -96,6 +96,7 @@ def main():
 
     print("Dang lay token tu Google...")
     token_info = exchange_code_for_tokens(OAuthCallbackHandler.auth_code)
+    granted_scopes = [s for s in token_info.get("scope", "").split() if s] or SCOPES
 
     creds = Credentials(
         token=token_info["access_token"],
@@ -103,7 +104,7 @@ def main():
         token_uri="https://oauth2.googleapis.com/token",
         client_id=settings.google_client_id,
         client_secret=settings.google_client_secret,
-        scopes=SCOPES
+        scopes=granted_scopes
     )
     save_token(creds)
     print("✅ Gmail authorized! Token saved successfully to .secrets/gmail-token.json.")
