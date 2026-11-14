@@ -5,7 +5,7 @@ from typing import Literal
 SeverityLevel = Literal["critical", "high", "medium", "low"]
 
 LEGAL_THREAT_REGEX = re.compile(
-    r"(kiện|tòa án|pháp luật|luật sư|công an|quản lý thị trường|bảo vệ người tiêu dùng|tố cáo|bóc phốt|lừa đảo|scam|sue|court|lawyer|police|legal action)",
+    r"(khởi kiện|kiện tụng|kiện ra tòa|đâm đơn kiện|\bkiện\b(?! hàng)|tòa án|pháp luật|luật sư|công an|quản lý thị trường|bảo vệ người tiêu dùng|tố cáo|bóc phốt|lừa đảo|scam|\bsue\b|\bcourt\b|\blawyer\b|\bpolice\b|legal action)",
     re.IGNORECASE
 )
 
