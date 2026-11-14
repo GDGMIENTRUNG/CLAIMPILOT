@@ -1,6 +1,6 @@
 const base =
   (import.meta as ImportMeta & { env: Record<string, string> }).env
-    .VITE_API_BASE_URL || "";
+    .VITE_API_BASE_URL || (typeof window !== "undefined" && window.location.port !== "8080" ? "http://localhost:8080" : "");
 let csrfToken = "";
 export function setCsrfToken(value: string) { csrfToken = value; }
 export class ApiError extends Error {
@@ -9,7 +9,7 @@ export class ApiError extends Error {
 export async function api<T>(path: string, method = "GET", payload?: unknown): Promise<T> {
   let response: Response;
   try {
-    response = await fetch(`${base}/api${path}`, { method, credentials: "same-origin",
+    response = await fetch(`${base}/api${path}`, { method, credentials: "include",
       headers: { ...(payload !== undefined ? { "Content-Type": "application/json" } : {}),
         ...(method !== "GET" && csrfToken ? { "X-CSRF-Token": csrfToken } : {}) },
       body: payload === undefined ? undefined : JSON.stringify(payload) });
