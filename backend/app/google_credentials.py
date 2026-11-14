@@ -15,7 +15,7 @@ class GoogleClientFactory:
             if not path.is_file():raise IntegrationError('gmail_not_authorized')
             data=json.loads(path.read_text());declared=data.get('scopes',[])
             if isinstance(declared,str):declared=declared.split()
-            if write and not any(s.endswith('/gmail.compose') or s.endswith('/gmail.modify') for s in declared):raise IntegrationError('gmail_compose_consent_required')
+            if write and not any(s.endswith('/gmail.compose') or s.endswith('/gmail.modify') or s.endswith('/gmail.send') or s.endswith('/mail.google.com') for s in declared):raise IntegrationError('gmail_compose_consent_required')
             creds=Credentials.from_authorized_user_file(str(path))
             if not creds.valid:
                 if not creds.refresh_token:raise IntegrationError('gmail_authorization_invalid_reauthorize')
