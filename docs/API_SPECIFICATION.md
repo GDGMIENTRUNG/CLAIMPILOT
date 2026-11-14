@@ -1,6 +1,10 @@
-# API specification — TARGET v3, nguồn duy nhất về wire contract
+# API specification — core v3 và extension AI-first v4
 
-Base `/api`, JSON UTF-8, UTC ISO8601; case ID int (complaint cũ), ID bảng mới UUID string; tiền decimal string. Enum nghiệp vụ tại [WORKFLOW](WORKFLOW.md). Toàn bộ endpoint mới là TARGET chưa code. Giữ đường dẫn API hiện có; không phải giữ các giới hạn một email/một quyết định của docs v1.
+Nguồn REQ-001–032: [requirements](AI_CUSTOMER_SUPPORT_REQUIREMENTS.md). Sau đợt docs, người dùng đã giao triển khai local; auth/KB/settings/agent/check/preview và core workflow đã có runtime, xem [implementation report](../IMPLEMENTATION_REPORT.md). Các đoạn TARGET/PROPOSED bên dưới giữ đích hợp đồng, không chứng minh mọi endpoint/live/cloud đã hoàn tất. Auth/Origin/CSRF áp dụng cả KB/settings/agents.
+
+Base `/api`, JSON UTF-8, UTC ISO8601; case ID int (complaint cũ), ID bảng mới UUID string; tiền decimal string. Enum nghiệp vụ tại [WORKFLOW](WORKFLOW.md). Giữ đường dẫn API hiện có; không phải giữ các giới hạn một email/một quyết định của docs v1.
+
+Runtime local: `review-context` hiện hỗ trợ `{expected_case_version,expected_reply_revision,note}` cho reply chưa gửi cùng quyết định; giữ body, tăng revision, ghim lại nguồn đủ điều kiện/settings qua một lượt staff_context_review có audit. Preview cũ bị vô hiệu; phải check/preview/xác nhận lại. Chưa hỗ trợ các fields chấp thuận ghi đè remote draft (`accept_local_over_external`/`expected_external_hash`) hoặc reconcile đầy đủ ở phần thiết kế bên dưới. Preview trả `check` và envelope chung `quality_check`, cùng một check. Không suy quyền live-send từ endpoint có sẵn.
 
 ## CURRENT giữ đường dẫn
 
@@ -119,3 +123,43 @@ Phân tích ảnh vẫn trả shape ở trên; bucket/key/generation/dimensions 
 A compose CaseDetail projection bằng read ports B/C đã chốt trong BASE, không import business write của B/C hoặc viết các router đó thay họ. Wire shape/HTTP/enum ở trên giữ nguyên. B/C tự tests UI/API/model bằng CaseContext/Session/Principal doubles trước; release thay bằng real shared runtime. Nội bộ [SHARED_CONTRACTS](SHARED_CONTRACTS.md), không tạo API phân tầng khác hoặc đổi tên field vì chia role mới.
 
 Evidence asset.evidence_kind đọc ra là packing/delivery/customer theo schema freeze; source order chỉ packing/delivery, source customer chỉ customer. Các field này phục vụ gắn nhãn bằng chứng, không là kết luận AI về việc giao hàng.
+## Extension v4 — PROPOSED / CR-001
+Base /api, mọi business route cần staff; write kiểm CSRF/Origin. Không truyền actor/system flags từ client, unknown field422. page>=1,page_size1..100; q<=200; UUID parse422, timestamp UTC, nullable explicit. Endpoint search không log query/body. Các mutation v4 có response domain chứa revision/version đã lưu; không optimistic success.
+
+| Route / owner | Request | Response / rule |
+|---|---|---|
+| GET /complaints / A | thêm processing_status?,q? | Envelope cũ; q tìm subject/body/order_id bằng parameterized escaped contains, không email/token search URL của UI; queue/filter canonical kế thừa |
+| GET /orders / A | page/page_size/q? | {items:OrderOut[],total,page,page_size}; staff only, read dữ liệu nguồn |
+| GET /policies / B | — | {items:[{version,label,rules_summary,source_status}]}; deterministic config đã nạp, không tưởng tượng policy thật |
+| GET /settings/business / A | — | Settings; thiếu config503 config_unavailable |
+| PATCH /settings/business / A | {expected_revision,display_name?,language?,tone?,note} | Settings; validate limits/enum theo DB; lock current pointer, append immutable version, conflict409 |
+| GET /settings/agents / A | — | {revision,settings_version_id,optional_roles,review_threshold,mandatory_roles,guardrails}; guardrails read-only |
+| PATCH /settings/agents / A | {expected_revision,optional_roles,review_threshold,note} | Cùng shape GET; optional_roles chỉ evidence_analysis, threshold null hoặc0..1; sửa mandatory/guardrails422 |
+| GET /knowledge / B | page/page_size/q?/topic?/status? | {items:KnowledgeRevision[],total,page,page_size}; staff CMS có thể thấy draft, retrieval không dùng route này |
+| POST /knowledge / B | {title,body,topic,source_label,source_reference?,valid_until?,review_due_at?} | 201 {article_id,revision:KnowledgeRevision}; draft revision1 |
+| GET /knowledge/{article_id} / B | — | {article_id,current_published_revision_id,revisions:KnowledgeRevision[]} |
+| GET /knowledge/{article_id}/revisions/{revision_id} / B | — | KnowledgeRevision đúng history, không redirect sang bản mới |
+| POST /knowledge/{article_id}/revisions / B | {expected_revision,title,body,topic,source_label,source_reference?,valid_until?,review_due_at?} | 201 draft mới,409 khi article latest revision không khớp |
+| PATCH /knowledge/{article_id}/revisions/{revision_id} / B | {expected_updated_at,title?,body?,topic?,source_label?,source_reference?,valid_until?,review_due_at?} | KnowledgeRevision; chỉ draft, row lock/time compare409; không sửa approved body |
+| POST .../revisions/{revision_id}/submit / B | {expected_updated_at} | pending_review; không tự publish |
+| POST .../revisions/{revision_id}/approve / B | {expected_updated_at,note} | approved + current published pointer; staff actor/time; cùng staff account vẫn là hành động riêng |
+| POST .../revisions/{revision_id}/archive / B | {expected_updated_at,note} | archived; giữ citation history, clear pointer nếu đang published |
+| POST .../revisions/{revision_id}/conflict / B | {expected_updated_at,has_conflict,note} | flag/review history; bỏ flag phải có staff căn cứ, không sửa content cũ |
+| GET /complaints/{id}/agent-runs / A | — | {items:AgentRun[]}; newest run trước; steps có stable role/attempt order |
+| POST /complaints/{id}/agent-runs / A | {expected_case_version} | 202 {run:AgentRun,case_version}; reserve persisted trước dispatch, busy409; chỉ analysis/preparation |
+| GET /complaints/{id}/sources / B | — | {items:SourceRef[],warnings:string[]}; refs từ run/projection persisted, auth/history sources |
+| GET /complaints/{id}/replies/{reply_id}/checks / C | — | {items:ReplyCheck[]}; latest check tính freshness lại, stale khi dependency đổi |
+| POST /complaints/{id}/replies/{reply_id}/checks / C | {expected_case_version,expected_revision} | {check:ReplyCheck,case_version}; kiểm cả manual reply; không send |
+
+Dấu ... trong route KB là /knowledge/{article_id}. Chưa có public Help Center, URL crawler, upload tài liệu hoặc DELETE history endpoint.
+
+Settings={revision,settings_version_id,display_name,language,tone,updated_at}. Hai settings PATCH dùng chung revision sequence; ghi mới không đổi body cũ. Khởi tạo lần đầu bằng PATCH business expected_revision=0, bắt buộc display_name/language/tone/note từ staff; atomic tạo version1+singleton, race409. Agents PATCH cần settings đã khởi tạo; không tự tạo brand mặc định. KnowledgeRevision={id,article_id,revision,title,body,topic,source_label,source_reference,status,valid_until,review_due_at,has_conflict,conflict_note,author,approved_by,approved_at,created_at,updated_at}. GET article bổ sung events domain audit đã lọc. Title1..300/body1..50000/topic1..100/source_label1..200; server sanitize text, note1..2000. valid_until phải ở tương lai khi approve; review_due quá hạn không eligible retrieval. Không thể sửa metadata approval qua input.
+
+AgentRun={id,complaint_id,basis_case_version,settings_version_id,status,required_roles,created_at,finished_at,steps:AgentStep[]}. AgentStep={id,role,attempt,status,started_at,finished_at,source_refs,output,confidence,error_code,skip_reason}; không expose raw prompt/input_snapshot. SourceRef schema tại DB, GET thêm eligible:boolean và stale_reason|null, không đổi persisted refs. Confidence có thể null, không tự hiển thị100%.
+ReplyCheck={id,reply_id,reply_revision,basis_case_version,settings_version_id,status,source_refs,findings,created_at}; hashes ở server. CaseDetail thêm agent_run|null,source_refs[]; dashboard thêm agent_counts:{running,failed,waiting_data} (đếm steps của latest run mỗi canonical case). Thêm field là TARGET, không frontend đọc trước wiring.
+
+### Extension vào composer/send
+Reply envelope thêm sources:SourceRef[],settings_version_id|null,quality_check:ReplyCheck|null,preview_token|null. Prepare AI pin settings và approved sources; manual reply cũng chạy deterministic safety. Không dùng draft KB, nguồn expired/conflict hoặc facts của đơn chưa xác minh để trả lời.
+POST /complaints/{id}/replies/{reply_id}/preview body {expected_case_version,expected_revision} → {reply,check,preview_token,case_version}; token là opaque HMAC-signed acknowledgement challenge với server PREVIEW_SIGNING_KEY, pin check/content/dependency/case/reply và hết hạn10 phút; không session token, giữ trong memory, không log/URL. Có thể render draft trước đó nhưng chỉ preview endpoint với passed check phát token.
+Send core body thêm preview_token bắt buộc cho writer v4; reserve kiểm case/reply/content/decision/latest inbound và dependency hash, token chưa dùng với intent khác. Replay idempotency key cũ trả kết quả đã persist trước khi kiểm freshness lại; không dispatch lại. Edit/context/source/config đổi →409 source_context_changed hoặc stale_preview (kể cả token hết hạn), chưa đủ safety→409 quality_blocked, provider check lỗi→503 quality_unavailable. Không âm thầm fallback về send v3 thiếu preview; có transition contract test.
+Đã sent giữ nguyên nguồn/check history; nguồn bị archive sau đó không đổi sent thành stale hoặc gửi lại.

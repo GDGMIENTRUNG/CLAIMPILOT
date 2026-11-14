@@ -1,4 +1,6 @@
-# System architecture — CURRENT → TARGET v3
+# System architecture — CURRENT → AI-first v4
+
+Nguồn [requirements](AI_CUSTOMER_SUPPORT_REQUIREMENTS.md). Core kiến trúc v3 dưới đây được giữ; phần bổ sung này là TARGET chưa code. Baseline13 bảng là CURRENT,7 bảng extension là PROPOSED CR-001.
 
 ## CURRENT
 
@@ -57,3 +59,11 @@ Chọn modular monolith: ba domain workspace/assessment/resolution trong cùng i
 BASE chuẩn bị exports/registry/metadata facade/DTO/ports/test harness theo [SHARED_CONTRACTS](SHARED_CONTRACTS.md). B/C tự triển khai router/models/components/domain transactions, A chỉ aggregate migration/settings/lock và compose UI. Fake adapters/Principal chỉ isolated test app hoặc explicit development; production cấm fake/bypass auth, thiếu dịch vụ trả lỗi rõ. Core CaseStore lock/version/audit là primitive, policy thuộc B và reserve/complete gửi thuộc C. Chưa có code scaffold/harness mới trong đợt tài liệu.
 
 Schema freeze có evidence_kind packing/delivery/customer. Với ảnh đơn ưu tiên một packing mới nhất và một delivery mới nhất; chỉ có một kind thì lấy tối đa2ảnh mới nhất của kind đó. Ảnh khách lấy tối đa2ảnh từ inbound mới nhất có ảnh. Snapshot ổn định theo created_at/id; asset đọc đúng bucket/key/generation, không nhầm ảnh đóng gói với bằng chứng giao hàng.
+## Orchestration, KB và cấu hình v4
+Một FastAPI composition root đăng ký workspace/assessment/resolution, thêm module knowledge do B và settings do A. Vẫn một image/URL, không6 microservices. Vai trò có thể là deterministic code hoặc LLM adapter; network chỉ qua adapter allowlist, không tool execution từ email.
+A coordinator dùng persisted agent_runs/steps với bounded execution; tiến độ poll GET5s khi active, ngừng khi terminal hoặc hết60 lần, có nút refresh thủ công. Không chạy background task không bền như nguồn trạng thái; sau crash đánh dấu interrupted/stale và retry có chủ đích, không phát lại Gmail send. Sync budget240s/5 inbound/20 known threads kế thừa; phần chưa làm persist backlog.
+
+B KnowledgeService quản content/revisions/eligibility; retrieval SQL text search (parameterized title/body/topic, limit5), chưa vector store/crawler. Trả SourceRef có pinned version/digest/excerpt; deterministic policy và order/asset DB là nguồn khác nhau, không coi KB override order facts. A settings versions/snapshot, B/C chỉ đọc via ports.
+C ReplyWriter và QualityService dùng decision+permitted facts+retrieval. Check lưu dependency/content fingerprint; preview/send revalidate KB/source/settings bằng lookup ngoài network, cùng reserve UoW. Nếu cần provider check thì persist basis rồi call ngoài lock; reserve chỉ dùng kết quả đã pin còn fresh. Không provider call mới để sửa body trong send.
+
+Không có KB/settings/run storage trong0005; CR-001 cần duyệt trước migration, riêng phiên bản đã duyệt mới phát hành. Core snapshots schema_version1 giữ nguyên; extension refs ở tables riêng, không đổi JSON legacy âm thầm.

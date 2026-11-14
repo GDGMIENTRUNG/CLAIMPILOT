@@ -1,4 +1,6 @@
-# Deployment — TARGET v3, A nền tảng + B/C domain checks
+# Deployment — baseline và AI-first v4
+
+Đây là docs TARGET theo [requirements](AI_CUSTOMER_SUPPORT_REQUIREMENTS.md). Các bước core bên dưới không phải lệnh thực thi trong đợt viết docs. Trạng thái billing trong phần cũ là lần kiểm lịch sử, phải kiểm lại; credit hết hạn không đồng nghĩa project được bật billing.
 
 BASE ngày14/11 đã có Dockerfile, app compose, migration0005, infra scripts và kiểm local; chưa có tài nguyên cloud được tạo trong đợt này. Project `claimpilot-513010` ACTIVE, billing chưa hoạt động (preflight exit3). A làm nền Cloud Run/SQL/Secrets/Scheduler, B cấu hình GCS/Gemini và C xác minh Gmail draft/send; cả ba fullstack. Region asia-southeast1. Ghi project/region/URL/image digest/revision/SQL connection name vào bàn giao, không secrets.
 
@@ -80,13 +82,14 @@ Multi-stage Node 22 build → Python 3.11 runtime locked deps, `.dockerignore` l
 | GCS_BUCKET | private bucket |
 | SCHEDULER_SERVICE_ACCOUNT | OIDC allowlist email |
 | POLICY_CONFIG_PATH | file demo-v2 trong image |
+| PREVIEW_SIGNING_KEY | TARGET Secret cho HMAC preview challenge; không VITE/log; chỉ sau review wire v4 |
 | DEMO_DATE / DEMO_CUSTOMER_EMAIL | 2026-11-14 / địa chỉ nhóm; chỉ seed job cần |
 
 A tích hợp config/env/dependency manifests từ B assessment và C resolution; mỗi domain tự làm provider/service/UI của mình. Secret versions pin cho revision release, không đổi latest ngoài ý muốn. Session TTL 8h; known thread cap20 và sync budget240s là hằng config MVP theo kiến trúc, A/B/C cùng thống nhất.
 
 ## 4. Deploy theo thứ tự
 
-Database baseline phát hành phải khớp CLAIMPILOT_MVP_DB_V1 (13 bảng), DB01–DB12 và metadata ba domain đã review; không deploy thiếu bảng B/C rồi ALTER lẻ trong startup. Một migration job có quyền DDL; runtime dùng quyền DML giới hạn, không DDL. Secrets/mode provider do cấu hình, không thêm cột khi nhận key ban tổ chức.
+Database core phát hành phải khớp CLAIMPILOT_MVP_DB_V1 (13 bảng), extension v4 theo CR-001 reviewed, DB01–DB12 và metadata ba domain đã review; không deploy thiếu bảng B/C rồi ALTER lẻ trong startup. Một migration job có quyền DDL; runtime dùng quyền DML giới hạn, không DDL. Secrets/mode provider do cấu hình, không thêm cột khi nhận key ban tổ chức.
 
 1. Build/push image theo commit/digest, không dùng latest làm bằng chứng.
 2. Run Job cùng image/SA/SQL/secrets chạy alembic upgrade head trong backend; đợi exit0, một head. Migration/backfill thử trên old-data fixture trước; không chạy startup mọi instance.
@@ -116,4 +119,9 @@ Database baseline phát hành phải khớp CLAIMPILOT_MVP_DB_V1 (13 bảng), DB
 
 A FS-A3/FS-A4 quản container/deploy/SQL/Secrets/IAM bindings/Scheduler, B FS-B2/FS-B3 tự probe model và cung cấp GCS/evidence config/deps, C FS-C3 tự consent compose và kiểm Gmail write/reconcile. Migration/job/lock A aggregate metadata B/C theo BASE; không ba migration chain hoặc ba service riêng. B/C vẫn phát triển domain qua harness khi cloud A đang dựng.
 
-[RELEASE_CHECKLIST](RELEASE_CHECKLIST.md) và AC01–AC12 kiểm cả ba UI/API/domain trên một URL. Không có công việc thuyết trình trong deployment backlog. Cloud Run runtime phải bind PORT và image đúng contract: [runtime contract](https://docs.cloud.google.com/run/docs/container-contract), [deploying containers](https://docs.cloud.google.com/run/docs/deploying).
+[RELEASE_CHECKLIST](RELEASE_CHECKLIST.md) và AC01–AC18 kiểm cả ba UI/API/domain trên một URL. Không có công việc thuyết trình trong deployment backlog. Cloud Run runtime phải bind PORT và image đúng contract: [runtime contract](https://docs.cloud.google.com/run/docs/container-contract), [deploying containers](https://docs.cloud.google.com/run/docs/deploying).
+## Gate deploy v4
+CR-001 approved + reviewed extension chain trước release KB/settings/agent/checks; chỉ13 bảng không thể claim v4. Dùng cùng Cloud SQL/private Storage, chưa thêm vector DB hoặc microservices. Cập nhật runtime grants cho7 bảng extension theo owner/append-only, giữ migration SA riêng; không cấp Editor/Owner cho app.
+Backup/restore thử + migrate0005 và fresh, SQL FK/index/default drift, giữ legacy IDs/body/audit/sent. Không seed KB approved/check passed/settings doanh nghiệp giả để làm readiness xanh; staff cấu hình và duyệt nội dung thật trong môi trường kiểm thử.
+Mở public login chỉ sau app auth/CSRF/internal OIDC hoàn thiện; KB/settings/sources không public. Provider/config snapshot history và refs phải còn sau revision mới. Smoke AC13–17 có save/reload, KB revision citation, run failure/stale và source invalidation trước send; AC18 pilot riêng. Không proxy arbitrary source_reference URL.
+Pause Scheduler/mutations trước đổi schema → migration Job → grants → compatible image → GET smoke/auth/KB/settings → run-now controlled → resume. Rollback image tương thích, không drop7 bảng hoặc downgrade history. Khi billing/OAuth/quota/CR thiếu, ghi BLOCKED phần live; không auto-create tài nguyên để kiểm docs.

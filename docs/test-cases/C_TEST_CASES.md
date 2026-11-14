@@ -1,6 +1,6 @@
 # Test cases C fullstack — Resolution + Communication
 
-**27 cases**, phân công v3; tất cả vẫn NOT_RUN. Nguồn: [task C](../tasks/C_RESOLUTION.md), [shared contracts](../SHARED_CONTRACTS.md), [workflow](../WORKFLOW.md), [API](../API_SPECIFICATION.md), [testing](../TESTING_GUIDELINES.md), [AC](../ACCEPTANCE_MATRIX.md).
+**32 cases**: 27 kế thừa +5 bổ sung AI-first v4; tất cả NOT_RUN. Nguồn mới: [requirements](../AI_CUSTOMER_SUPPORT_REQUIREMENTS.md). Nguồn: [task C](../tasks/C_RESOLUTION.md), [shared contracts](../SHARED_CONTRACTS.md), [workflow](../WORKFLOW.md), [API](../API_SPECIFICATION.md), [testing](../TESTING_GUIDELINES.md), [AC](../ACCEPTANCE_MATRIX.md).
 
 ## Cách dùng
 
@@ -372,3 +372,62 @@
 ## Bàn giao C
 
 Đủ test bắt buộc và regression theo domain mới đề nghị REVIEW; reviewer xác nhận VERIFIED theo TESTING_GUIDELINES. ALL1 còn cần AC01–AC12 trên Cloud Run. Mock UI/DB không chứng minh Gmail/Gemini/cloud thật.
+
+## Bổ sung AI-first v4 — CR-001 chưa được duyệt triển khai
+
+Các case mới giữ trạng thái NOT_RUN; fixture/mock không chứng minh live. Storage extension chỉ thử sau review CR và task migrate riêng. ID mới không đổi78 IDs kế thừa.
+
+### FS-C2-T05 — Reply pin nguồn và cấu hình mới
+
+- **Task / yêu cầu / AC:** FS-C2; REQ-014/018/023; AC16/17.
+- **Mốc bắt buộc:** MERGE.
+- **Loại kiểm tra:** DB/API/browser.
+- **Điều kiện / dữ liệu:** Reply từ settings v1/KB revision1, sau đó đổi tone/language/publish KB2.
+- **Các bước / biến thể:** Prepare nội dung mới; reload reply cũ; mở nguồn và render thiếu settings/no-match.
+- **Kết quả mong đợi:** Nội dung mới dùng config current và refs thật; body/history cũ không tự sửa; nguồn cũ mở đúng version; thiếu config/provider không fake success, manual composer còn dùng được.
+- **Kết quả thực tế / evidence / revision / reviewer:** Chưa chạy; chưa có.
+- **Trạng thái:** NOT_RUN.
+
+### FS-C2-T06 — Safety cho AI và manual reply
+
+- **Task / yêu cầu / AC:** FS-C2; REQ-021–026; AC17.
+- **Mốc bắt buộc:** MERGE.
+- **Loại kiểm tra:** API/DB/browser.
+- **Điều kiện / dữ liệu:** Decision hợp lệ, body AI/manual, unknown order và no KB.
+- **Các bước / biến thể:** Check claims/refund completed/recipient/ownership/sources; sửa sang request info trung tính và check/preview.
+- **Kết quả mong đợi:** AI và manual đều qua deterministic safety; source/claim không căn cứ blocked có findings; không bypass, sửa hợp lệ mới passed; passed/preview không gửi thư.
+- **Kết quả thực tế / evidence / revision / reviewer:** Chưa chạy; chưa có.
+- **Trạng thái:** NOT_RUN.
+
+### FS-C2-T07 — Safety thất bại và dữ liệu độc hại
+
+- **Task / yêu cầu / AC:** FS-C2; REQ-010/026/028/029; AC17.
+- **Mốc bắt buộc:** MERGE.
+- **Loại kiểm tra:** fault/provider fixtures/browser.
+- **Điều kiện / dữ liệu:** Dirty composer và safety provider/DB timeout; email/KB injected instructions.
+- **Các bước / biến thể:** Gây lỗi check và click gửi; đổi panel/read history; cố truyền status passed/actor/guardrail qua client.
+- **Kết quả mong đợi:** Không token preview/sent fake, không dispatch; giữ body/read history; validation chặn forged fields và secret disclosure; UI phân biệt failed/blocked/stale.
+- **Kết quả thực tế / evidence / revision / reviewer:** Chưa chạy; chưa có.
+- **Trạng thái:** NOT_RUN.
+
+### FS-C3-T14 — Preview invalidation theo mọi dependency
+
+- **Task / yêu cầu / AC:** FS-C3; REQ-008/022/023; AC06/17.
+- **Mốc bắt buộc:** MERGE.
+- **Loại kiểm tra:** concurrency/DB/API/browser.
+- **Điều kiện / dữ liệu:** Passed check+preview token, chưa reserve.
+- **Các bước / biến thể:** Lần lượt edit body/recipient intent, inbound/decision/revision đổi, KB archive/publish/expiry/conflict, settings đổi rồi send.
+- **Kết quả mong đợi:** Token/check không còn fresh dù case_version không đổi khi KB/config đổi;409 rõ, không Gmail call; phải review/check/preview mới và confirm đúng nội dung. Client không tự hash/token bypass.
+- **Kết quả thực tế / evidence / revision / reviewer:** Chưa chạy; chưa có.
+- **Trạng thái:** NOT_RUN.
+
+### FS-C3-T15 — Idempotency replay và sent history khi nguồn đổi
+
+- **Task / yêu cầu / AC:** FS-C3; REQ-024/027; AC08/17.
+- **Mốc bắt buộc:** MERGE.
+- **Loại kiểm tra:** mock Gmail/DB.
+- **Điều kiện / dữ liệu:** Một send đã persist; lần khác unknown sau dispatch; nguồn/settings thay đổi.
+- **Các bước / biến thể:** Replay same key+same intent, reuse key khác payload, open sent reply, retry unknown.
+- **Kết quả mong đợi:** Replay trả persisted result không Gmail call mới; khác payload409; sent body/check/sources giữ lịch sử, không bị đánh stale rồi resend; unknown phải reconcile, không auto retry.
+- **Kết quả thực tế / evidence / revision / reviewer:** Chưa chạy; chưa có.
+- **Trạng thái:** NOT_RUN.

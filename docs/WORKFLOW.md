@@ -1,4 +1,6 @@
-# Luồng chuẩn và state machine — TARGET v2
+# Luồng chuẩn — AI-first v4 và lifecycle kế thừa
+
+Nguồn [requirements](AI_CUSTOMER_SUPPORT_REQUIREMENTS.md). Các trạng thái nghiệp vụ bên dưới được giữ. Storage/API của điều phối/KB/settings/safety là extension CR-001 PROPOSED; agent status không thay enum SQL workflow/decision/reply hiện hành.
 
 Đây là nguồn chuẩn enum nghiệp vụ. Một hồ sơ có nhiều messages, decisions, replies và audit events. Tên `complaints`/ID cũ được giữ để tương thích; UI gọi là hồ sơ. Một Gmail thread ↔ tối đa một hồ sơ trong mailbox demo. Một hồ sơ chọn một đơn; nhiều đơn/khác chủ đề được gắn needs_manual_review, không tự tách/gộp.
 
@@ -79,3 +81,19 @@ Fulfillment completed lưu time/actor/reference/note ở cột complaints đã c
 ## Giới hạn có chủ đích
 
 Một Gmail, một account staff, một đơn/hồ sơ, chỉ ảnh JPEG/PNG. Không multi-tenant, thanh toán, kho, video, SLA phức tạp hoặc công cụ split/merge. Mọi trường hợp vượt giới hạn có hàng đợi thủ công, không bị tự từ chối hoặc âm thầm bỏ qua.
+## Điều phối AI-first v4
+Chuỗi vai trò phần mềm: intake_classification → order_lookup → policy_assessment (approved KB + deterministic policy); evidence_analysis có thể song song policy khi đủ input → đề xuất để staff quyết định → reply_writer → safety_quality → staff preview/confirm send. A điều phối, B làm lookup/policy/evidence/retrieval, C làm writer/checks. Agent roles không có quyền send/approve/fulfillment/close, không phải coding subagents.
+
+Analysis run trigger inbound/retry/manual có required roles intake_classification/order_lookup/policy_assessment và evidence nếu case cần bằng chứng. Prepare run sau staff decision có required roles reply_writer/safety_quality; cả6 roles được hiển thị theo các lượt, không đòi writer chạy trước quyết định. Coordinator giữ required_roles snapshot, skipped role mandatory làm run review_required.
+
+AgentStep: queued→running→completed|failed|waiting_data|stale|skipped. Retry tạo attempt mới, giữ output cũ. AgentRun: queued/running/completed/review_required/failed/stale; completed chỉ khi mọi required step completed. Evidence optional không có ảnh có thể skipped kèm reason; nếu vấn đề cần ảnh để kết luận thì waiting_data và review_required. Context đổi làm output cũ stale và không publish; bước không chạy do dependency thất bại phải waiting_data với lý do, không fake hoàn tất.
+
+Sau intake đã persist, ghi run/basis/settings trước network. Chỉ publish qua CaseStore nếu context đúng; không tự tạo quyết định hoặc gửi. Lỗi/bất đồng/nguồn không đủ/threshold không đạt giữ needs_review và manual path. Một lần publish business mutation chỉ bump case_version một lần; heartbeat/progress không bump. Confidence thiếu/không kiểm chứng để null; không dùng làm căn cứ approve.
+
+## Knowledge Base và settings
+KB draft→pending_review→approved→archived; chỉnh approved tạo draft revision mới, duyệt riêng. Retrieval chỉ current published approved, chưa hết valid_until/review_due_at và không has_conflict. Không kết quả/mâu thuẫn thì báo thiếu căn cứ, không invent policy. Citation pin ID/revision/digest/excerpt; đọc history đúng bản đã dùng. Single staff account không giả review bởi người thứ hai.
+Settings immutable version; optional evidence role có thể tắt, mandatory roles và guardrails không tắt. Threshold null mặc định, numeric nếu cấu hình0..1 chỉ dùng với validated score; thiếu score chuyển review. Run mới dùng current settings; reply/run cũ giữ snapshot.
+
+## Quality và xác nhận nội dung
+Writer chỉ chuẩn bị sau staff decision, pin nguồn/settings. Manual reply cũng cần safety_quality. Safety gồm recipient/ownership, nguồn/claim/amount, prompt injection, không hứa refund đã thực hiện, current context; policy/nguồn mâu thuẫn là blocker. Có thể sửa sang yêu cầu thông tin trung tính dựa trên khách/decision khi thiếu KB; phải check lại, không có nút bỏ qua guardrail.
+passed check không gửi. Preview pin toàn bộ dependency + case/reply revision/content. Staff send xác nhận token preview này; edit/new inbound/KB/config dependency đổi thì check/token stale, cần xem/check lại. Tại reserve revalidate nguồn và token; giữ luồng reserve→Gmail→complete hiện hành. Unknown không auto resend. Sent là history, không bị thay bởi publish KB/settings sau đó.

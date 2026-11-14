@@ -62,3 +62,22 @@ class IntegrationState(Base):
 
 class GmailIntakeFailure(Base):
     __table__ = Base.metadata.tables['gmail_intake_failures']
+
+
+from app.schema_v2 import attach
+attach(Base.metadata)
+
+class BusinessSettings(Base):
+    __table__ = Base.metadata.tables['business_settings']
+class SettingsVersion(Base):
+    __table__ = Base.metadata.tables['business_settings_versions']
+class KnowledgeArticle(Base):
+    __table__ = Base.metadata.tables['knowledge_articles']
+class KnowledgeRevision(Base):
+    __table__ = Base.metadata.tables['knowledge_revisions']
+class AgentRun(Base):
+    __table__ = Base.metadata.tables['agent_runs']
+class AgentStep(Base):
+    __table__ = Base.metadata.tables['agent_steps']
+class ReplyCheck(Base):
+    __table__ = Base.metadata.tables['reply_checks']

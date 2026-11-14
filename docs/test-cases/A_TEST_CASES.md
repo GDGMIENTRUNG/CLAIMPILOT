@@ -1,6 +1,6 @@
 # Test cases A fullstack — Workspace + Cloud Run
 
-**32 cases**, phân công v3; tất cả vẫn NOT_RUN. Nguồn: [task A](../tasks/A_WORKSPACE.md), [shared contracts](../SHARED_CONTRACTS.md), [workflow](../WORKFLOW.md), [API](../API_SPECIFICATION.md), [testing](../TESTING_GUIDELINES.md), [AC](../ACCEPTANCE_MATRIX.md).
+**38 cases**: 32 kế thừa +6 bổ sung AI-first v4; tất cả NOT_RUN. Nguồn mới: [requirements](../AI_CUSTOMER_SUPPORT_REQUIREMENTS.md). Nguồn: [task A](../tasks/A_WORKSPACE.md), [shared contracts](../SHARED_CONTRACTS.md), [workflow](../WORKFLOW.md), [API](../API_SPECIFICATION.md), [testing](../TESTING_GUIDELINES.md), [AC](../ACCEPTANCE_MATRIX.md).
 
 ## Cách dùng
 
@@ -437,3 +437,73 @@
 ## Bàn giao A
 
 Đủ test bắt buộc và regression theo domain mới đề nghị REVIEW; reviewer xác nhận VERIFIED theo TESTING_GUIDELINES. ALL1 còn cần AC01–AC12 trên Cloud Run. Mock UI/DB không chứng minh Gmail/Gemini/cloud thật.
+
+## Bổ sung AI-first v4 — CR-001 chưa được duyệt triển khai
+
+Các case mới giữ trạng thái NOT_RUN; fixture/mock không chứng minh live. Storage extension chỉ thử sau review CR và task migrate riêng. ID mới không đổi78 IDs kế thừa.
+
+### FS-A2-T10 — Keyword search và filters
+
+- **Task / yêu cầu / AC:** FS-A2; REQ-002/003/031; AC13.
+- **Mốc bắt buộc:** MERGE.
+- **Loại kiểm tra:** API/PostgreSQL/browser.
+- **Điều kiện / dữ liệu:** Canonical work/technical datasets có subject/body/order khác nhau và alias/false.
+- **Các bước / biến thể:** Search Unicode, ký tự %, _, quote; phối hợp processing/workflow/type/page; back/reload.
+- **Kết quả mong đợi:** Kết quả đúng queue/canonical; parameterized search, không SQL injection; alias/false không lẫn; giữ q trong state UI, không log hoặc đưa nội dung/email vào URL.
+- **Kết quả thực tế / evidence / revision / reviewer:** Chưa chạy; chưa có.
+- **Trạng thái:** NOT_RUN.
+
+### FS-A2-T11 — Năm mục workspace và panel isolation
+
+- **Task / yêu cầu / AC:** FS-A2; REQ-001/005/028–030/032; AC13.
+- **Mốc bắt buộc:** MERGE.
+- **Loại kiểm tra:** browser fixtures.
+- **Điều kiện / dữ liệu:** Desktop và390px, dirty note/body, một panel trả503.
+- **Các bước / biến thể:** Đi qua5 mục; mở deep-link; đổi Hội thoại/Đánh giá/Lịch sử bằng keyboard; gây lỗi context panel.
+- **Kết quả mong đợi:** Active nav rõ không chỉ màu; không tenant switch giả; input giữ khi đổi tab; history vẫn đọc; unavailable không giả0; không overflow hoặc action che textarea.
+- **Kết quả thực tế / evidence / revision / reviewer:** Chưa chạy; chưa có.
+- **Trạng thái:** NOT_RUN.
+
+### FS-A3-T12 — Business settings round-trip và concurrent edit
+
+- **Task / yêu cầu / AC:** FS-A3; REQ-018/020; AC16.
+- **Mốc bắt buộc:** MERGE.
+- **Loại kiểm tra:** API/PostgreSQL/browser.
+- **Điều kiện / dữ liệu:** CR approved/schema thử và staff session, settings revision1.
+- **Các bước / biến thể:** Save name/language/tone rồi reload; gửi invalid/unknown fields;2 tab cùng expected_revision; giả persistence failure.
+- **Kết quả mong đợi:** Append version/current pointer atomic; server actor/time; valid mới Saved, invalid422/conflict409/failure giữ input, history revision cũ không đổi.
+- **Kết quả thực tế / evidence / revision / reviewer:** Chưa chạy; chưa có.
+- **Trạng thái:** NOT_RUN.
+
+### FS-A3-T13 — Agent settings không tắt guardrail
+
+- **Task / yêu cầu / AC:** FS-A3; REQ-019/020/026; AC16/17.
+- **Mốc bắt buộc:** MERGE.
+- **Loại kiểm tra:** API/PostgreSQL.
+- **Điều kiện / dữ liệu:** Settings fixture và permitted evidence optional.
+- **Các bước / biến thể:** Toggle optional evidence, threshold null/0/1/outside range; thử tắt safety/auth/confirmed_send hoặc mandatory role; anonymous/cross-origin.
+- **Kết quả mong đợi:** Chỉ options cho phép persist; guardrail/unknown input bị chặn; không partial save; không confidence thì null/review; auth/CSRF áp dụng settings.
+- **Kết quả thực tế / evidence / revision / reviewer:** Chưa chạy; chưa có.
+- **Trạng thái:** NOT_RUN.
+
+### FS-A4-T06 — Progress sáu vai trò bền vững và retry
+
+- **Task / yêu cầu / AC:** FS-A4; REQ-006–011; AC14.
+- **Mốc bắt buộc:** MERGE.
+- **Loại kiểm tra:** fault/DB/browser.
+- **Điều kiện / dữ liệu:** Contract step ports với required failed/waiting/stale và optional skipped.
+- **Các bước / biến thể:** Start run; query/restart giữa step; retry; đổi case version trước callback; hết budget.
+- **Kết quả mong đợi:** Vai trò/status/time/sources/attempt thật; required failure không completed; không ghi đè manual; interrupted được truy vết; retry giữ history; không gọi Gmail send; UI poll bounded/manual refresh.
+- **Kết quả thực tế / evidence / revision / reviewer:** Chưa chạy; chưa có.
+- **Trạng thái:** NOT_RUN.
+
+### FS-A3-T14 — CR extension mới/cũ và schema gate
+
+- **Task / yêu cầu / AC:** FS-A3; REQ-007/009/012–020; AC12/15/16.
+- **Mốc bắt buộc:** MERGE.
+- **Loại kiểm tra:** PostgreSQL/migration.
+- **Điều kiện / dữ liệu:** Chỉ khi CR-001 approved và người dùng giao migrate; bản0005 có dữ liệu và DB mới.
+- **Các bước / biến thể:** Thử additive upgrade/repeat/restore/drift, invalid composite KB pointer và step active unique; kiểm runtime grants.
+- **Kết quả mong đợi:** Giữ13 bảng/IDs/body/history cũ; extension đúng reviewed dictionary; không seed KB approved/check passed/config giả; chưa CR thì BLOCKED_CR, không PASS; runtime không DDL hoặc sửa terminal history tùy ý.
+- **Kết quả thực tế / evidence / revision / reviewer:** Chưa chạy; chưa có.
+- **Trạng thái:** NOT_RUN.

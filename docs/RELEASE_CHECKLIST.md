@@ -1,4 +1,6 @@
-# Checklist phát hành sản phẩm — Cloud Run
+# Release checklist — AI-first v4
+
+Nguồn [requirements](AI_CUSTOMER_SUPPORT_REQUIREMENTS.md). Các mục core dưới đây vẫn bắt buộc; tổng hiện hành96 test và AC01–18, không78/AC01–12 riêng lẻ. Chưa phần nào của v4 được tick bởi lần sửa docs.
 
 Đây là kiểm tra sản phẩm, không task chuẩn bị slide/thuyết trình. Tất cả checkbox chưa thực hiện, không bằng chứng PASS. Owner theo phần fullstack, ALL1 do cả nhóm review.
 
@@ -34,3 +36,13 @@ Live chỉ mailbox nhóm được giao, không gửi lặp không cần thiết;
 - [ ] Revision tốt/digest/schema compatibility được ghi; task chưa đủ evidence giữ REVIEW/BLOCKED.
 - [ ] Rollback trên môi trường thử: pause Scheduler/mutations, không hai writer schema khác, không drop/downgrade DB.
 - [ ] Sau kiểm thử thống nhất việc giữ/pause tài nguyên có chi phí; không tự xóa DB/bucket.
+## Gate v4 bổ sung
+- [ ] Review CR-001 có record quyết định; schema extension/wire/owner đã duyệt, không sửa migration0005 hoặc JSON legacy.
+- [ ]96 cases A38/B26/C32 có evidence từng variant; AC13–17 real integration; SC/AC18 chưa đo ghi NOT_RUN.
+- [ ]5-tab nav/search/filter/mobile/keyboard/dirty-input và panel error isolation đạt.
+- [ ]6 role status/time/source/attempt persisted qua restart; required failure không completed, stale không đè manual.
+- [ ] KB draft/submit/approve/publish/archive/expiry/conflict đúng; source link mở đúng historical revision.
+- [ ] Settings save/reload/version/new-content-only, guardrails không tắt, invalid/409 không fake success.
+- [ ] AI/manual reply có safety; source/config/context/content đổi làm preview/check stale, send không dispatch; replay idempotency không resend.
+- [ ] Sent/case history/KB settings snapshots giữ qua image revision; không log PII/secrets hoặc public KB nội bộ.
+- [ ] Báo rõ scope P1/P2 chưa xong; không công bố SC-001–007 đạt từ test fixtures.

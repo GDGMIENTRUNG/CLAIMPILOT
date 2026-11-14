@@ -1,29 +1,25 @@
-# SRS — TARGET v3 và traceability fullstack
+# SRS — Traceability AI-first v4
 
-| ID | Yêu cầu | Task fullstack | Nghiệm thu |
+Nguồn chuẩn sản phẩm: [AI_CUSTOMER_SUPPORT_REQUIREMENTS](AI_CUSTOMER_SUPPORT_REQUIREMENTS.md). ID REQ/SC giữ nguyên; FR01–11 là nhóm chức năng legacy để đọc78 test cũ, không thay REQ mới.
+
+| REQ | Hành vi bắt buộc | Owner/task | Acceptance |
 |---|---|---|---|
-| FR01 | Login/logout/me, CSRF và phiên hết hạn | FS-A1; router B/C dùng dependency BASE | AC10 |
-| FR02 | Một hồ sơ nhiều email, bổ sung/mở lại, intake không trùng | FS-A2 + FS-C4 | AC02/AC07 |
-| FR03 | Nhiều quyết định, phương án, audit/version | FS-C1 + shared CaseStore | AC01/AC02/AC06 |
-| FR04 | Năm policy, missing fields/next action/version | FS-B1/FS-B2/FS-B4 | AC03/AC04/AC11 |
-| FR05 | Prepare/edit/review/draft/send có xác nhận | FS-C2/FS-C3 | AC01/AC05/AC06/AC08 |
-| FR06 | Ảnh private, một/hai phía, Gemini nhận xét | FS-B3 | AC02/AC09 |
-| FR07 | Cloud Run/SQL/Secrets/Storage bền vững | FS-A3 + B private GCS manifests | AC12 |
-| FR08 | Scheduler5 phút/OIDC/DB lock/last sync | FS-A4 | AC12 |
-| FR09 | Fixture/seed đủ 5 nhóm, relative dates, lỗi và full-loop release | BASE + FS-A2/FS-B4/FS-C4; không task thuyết trình | AC11/AC12 |
-| FR10 | Đính chính/xác minh/manual khi AI lỗi | FS-B1/FS-B4 + manual composer FS-C2 | AC03/AC04 |
-| FR11 | Ghi thực hiện ngoài app/resolved/close/reopen | FS-C4 + A inbound primitive | AC01/AC07 |
+| 001–005 | 5 mục điều hướng, search/filter, toàn hội thoại, trạng thái mail và mobile giữ input | A FS-A2/A3; B/C panel riêng | AC02/07/13 |
+| 006–011 | Điều phối6 vai trò, nguồn/version/timing, lỗi/bất đồng chuyển review và manual/retry | A FS-A4; B FS-B2/B4; C FS-C2 | AC04/14/17 |
+| 012–015 | KB CRUD/search/review/publish/archive, effective approved revisions và citation | B FS-B2/B4; C đọc nguồn | AC15/17 |
+| 016–017 | Trạng thái Gmail/deferred, dữ liệu đơn/policy/KB có nguồn rõ | A FS-A2/A4; B FS-B1/B2 | AC03/12/16 |
+| 018–020 | Business settings, optional agent toggles và escalation settings, validation/persistence | A FS-A3; B/C dùng snapshot | AC16/17 |
+| 021–025 | Quyết định nhân viên, xác nhận đúng final revision, idempotency, fulfillment thủ công | C FS-C1..C4; A core UoW | AC01/05/06/08/17 |
+| 026–027 | Input không đáng tin; actor staff/agent/system phân biệt; không secrets/log PII | A+B+C | AC10/17 |
+| 028–032 | Cùng origin, panel isolation, lỗi giữ input, keyboard390px, auth và unknown=null | A+B+C | AC10/12/13 |
 
-## Phi chức năng
+## Yêu cầu kế thừa
+FR01 auth; FR02 hội thoại; FR03 quyết định/audit; FR04 policy; FR05 replies/send; FR06 ảnh; FR07 Cloud; FR08 polling; FR09 fixtures; FR10 manual; FR11 lifecycle. AC01–12 và78 test FS cũ tiếp tục bắt buộc; AC13–18 và18 tests mới bổ sung v4.
 
-- NFR01: Không key/token/stacktrace/ảnh public; session/CSRF/OIDC đúng ranh giới.
-- NFR02: AI/Gmail lỗi giữ dữ liệu/decision/body, không báo thành công giả.
-- NFR03: Gmail unique/DB lock/persistent reservation, không hứa exactly-once khi provider timeout.
-- NFR04: loading/empty/error/stale/unknown rõ, keyboard/mobile390px dùng được.
-- NFR05: timeout/budget bounded, last_success/deferred rõ, không claim realtime.
-- NFR06: UTC timestamps/ngày nghiệp vụ Asia/Ho_Chi_Minh, Decimal/string tiền.
-- NFR07: frozen schema/backfill/additive migration một head, không xóa dữ liệu cũ.
-- NFR08: isolated domain harness để ba fullstack bắt đầu song song; release Cloud Run cấm fake adapters/auth bypass.
-- NFR09: schema CLAIMPILOT_MVP_DB_V1 đủ13 bảng/203 cột trong BASE, FK cùng case/reply và gates DB01–DB12; không thay DDL trong FS task nếu chưa có change request thống nhất nhóm. FROZEN_SPEC không thay runtime migration checks.
-
-Enum [WORKFLOW](WORKFLOW.md), internal [SHARED_CONTRACTS](SHARED_CONTRACTS.md), wire/schema tại API/DATABASE, evidence [AC matrix](ACCEPTANCE_MATRIX.md). CURRENT chỉ phần được nêu ở CONTEXT; requirements mới chưa thành code vì docs đã xong. Không có requirement làm slide/thuyết trình.
+## Ràng buộc triển khai
+- Schema0005 là CURRENT. CR-001 và API v4 là PROPOSED; review schema/wire/owner trước feature cần storage mới.
+- Một chain Alembic additive, giữ dữ liệu cũ; không sửa schema_v1/backfill_v1/migrations đã chạy hoặc nhét KB/settings vào JSON legacy.
+- AI role có thể dùng code deterministic hoặc provider; không buộc6 SDK calls/6 services. Phải có kết quả nguồn/trạng thái thật, không progress giả.
+- Không network khi giữ row lock; kiểm context/source/config dependencies trước apply/check/send.
+- Token/keys ở Secrets, binary ảnh private Storage; business data chỉ nhân viên đã đăng nhập.
+- SC-001–007 cần pilot có dataset/rubric/baseline; ngưỡng không tự chứng minh bằng unit tests.

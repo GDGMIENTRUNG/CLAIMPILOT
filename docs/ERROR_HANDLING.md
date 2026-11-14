@@ -1,4 +1,6 @@
-# Error handling — TARGET v2
+# Error handling — AI-first v4
+
+Nguồn [requirements](AI_CUSTOMER_SUPPORT_REQUIREMENTS.md). Giữ codes core v3 dưới đây, bổ sung codes v4 sau CR review. UI lỗi một panel vẫn đọc history, input giữ an toàn; không echo body/prompts/credential vào detail/code.
 
 Owner v3 theo feature: A intake/auth/sync/cloud, B policy/manual/evidence/text, C decisions/replies/Gmail write/lifecycle; shared errors/wire codes không đổi vì chia người. UI/API/tests lỗi của phần nào do fullstack phần đó làm, không chờ một người viết frontend hoặc backend chung.
 
@@ -39,3 +41,16 @@ AI finish sau manual edit giữ kết quả gốc ở message nhưng không over
 ## Logging
 
 Event/request/case/reply/operation ID, code và duration; không cookie/password/token, raw email/ảnh hoặc prompt. integration_state lưu last_attempt/last_success/error/deferred. UI nói hành động cần làm, không lộ thông số nội bộ. Không đổ mọi lỗi kỹ thuật thành “không đủ điều kiện”.
+## Codes extension PROPOSED
+| HTTP/code | UI/service behavior |
+|---|---|
+|503 config_unavailable / schema_extension_unavailable | Settings/KB/run storage chưa sẵn; không fake save/progress, phần đọc core vẫn dùng được |
+|409 settings_conflict / knowledge_conflict | Giữ form, tải latest revision, staff chủ động đối chiếu |
+|409 invalid_knowledge_state | Không edit published body/approve draft chưa submit; giữ input |
+|422 invalid_agent_settings | Từ chối role/threshold/guardrail changes không hợp lệ, không partial save |
+|409 agent_busy | Đã có required run active, không tạo calls trùng |
+|503 agent_unavailable / quality_unavailable | Persist failed attempt, giữ message/body/manual path; không check passed giả |
+|409 quality_blocked | Findings có căn cứ, sửa nội dung/nguồn rồi check lại; không bypass |
+|409 source_context_changed / stale_preview | Source/config/body/context đổi, giữ body, review/check/preview lại trước send |
+
+No KB match/conflict không HTTP success giả “đã xác minh”: AgentStep waiting_data hoặc output review_reasons rõ; run review_required. Optional skipped không là completed; pending/failed sources không dùng làm căn cứ. Candidate fetch lỗi vẫn intake_failures; không tạo complaint giả để chứa config/KB event.

@@ -1,8 +1,23 @@
-# Known issues — CURRENT và rủi ro fullstack v3
+# Known issues — CURRENT và AI-first v4
+
+Nguồn [requirements](AI_CUSTOMER_SUPPORT_REQUIREMENTS.md). Sau đợt docs, người dùng đã giao triển khai local: runtime v4/0006/20 bảng đã có, xem [implementation report](../IMPLEMENTATION_REPORT.md). Các bảng K01–K26 bên dưới ghi lịch sử/gap của đợt thiết kế, không phải trạng thái runtime mới nhất. 96 cases tài liệu cần đối chiếu từng ID, không suy từ tổng số automated tests.
+
+## Gap hiện hành của bản local
+
+| ID | Hiện trạng | Owner/gate |
+|---|---|---|
+| LOCAL-01 | Chưa kiểm live Gmail/Gemini/Groq; Gmail write mặc định tắt | B/C adapter và A credential wiring; kiểm live riêng |
+| LOCAL-02 | Chưa hoàn thiện draft update/send/reconcile UI; draft đã lưu bị chặn bảo toàn nội dung remote | C FS-C3 |
+| LOCAL-03 | Chưa nghiệm thu Cloud Run/SQL/GCS/Scheduler; ảnh hiện dùng private local adapter | A/B cloud gate, không ALL1 PASS |
+| LOCAL-04 | Safety local kiểm luật/nguồn/version; chưa semantic quality hoặc confidence calibration/pilot. Có threshold nhưng không có confidence đã đo → review_required | B/C SC pilot |
+| LOCAL-05 | Crash giữa provider/run chưa có recovery UI đầy đủ; run đang chạy có thể cần đối soát trước retry | A/B orchestration |
+| LOCAL-06 | Chưa review độc lập A/B/C và chưa xác nhận toàn bộ96 test đặc tả | Reviewer theo TESTING_GUIDELINES |
+
+## Lịch sử baseline và thiết kế trước triển khai local
 
 | ID | Hiện trạng/rủi ro | Owner xử lý |
 |---|---|---|
-| K01 | BASE14/11:92 backend tests PASS local; 78 test FS/live/cloud chưa nghiệm thu | từng domain chạy own regression và acceptance |
+| K01 | BASE14/11:92 backend tests PASS local; 96 test FS/live/cloud hiện hành chưa nghiệm thu | từng domain chạy own regression và acceptance |
 | K02 | Gemini timeout lịch sử, chưa probe lại | B text/ảnh FS-B2/FS-B3; C reply provider FS-C2 |
 | K03 | Token readonly không draft/send | C FS-C3 OAuth compose; A factory/secrets mount |
 | K04 | BASE đã thêm GMAIL_TOKEN_READ_ONLY=true: refresh giữ memory; chưa kiểm live mounted secret | A FS-A3/C FS-C3 kiểm OAuth cloud thực |
@@ -23,3 +38,13 @@
 | K19 | DB0005 local và92 tests đạt; runtime gates nghiệp vụ/cloud chưa đủ | B/C review mapping; A hoàn thiện BASE harness/ports; không tự ALTER theo feature |
 
 Đợt BASE đã giải quyết schema/container và thêm cấu hình; chưa giải quyết các feature/rủi ro còn lại bằng code. Thiếu Google/cloud là BLOCKED đúng phần, không mock production. Phân tầng owner cũ hết hiệu lực; tìm dòng “Mã cũ” trong ba bộ test fullstack nếu nhận bàn giao mã cũ.
+## Gaps v4
+| ID | Gap và ảnh hưởng | Owner/gate |
+|---|---|---|
+| K20 |0005 không có KB/settings/per-role run/safety history; không thể claim đủ v4 | CR-001 PENDING_REVIEW, A aggregate/B+C review |
+| K21 | UI hiện list/detail cũ, chưa5 mục/search/progress/KB/settings | A shell; B KB; C quality/composer |
+| K22 | Chưa KnowledgeService/eligibility/citations/source conflicts | B FS-B2/B4; C trước writer/send |
+| K23 | Chưa settings immutable revisions và pin config cho reply | A FS-A3/C FS-C2 |
+| K24 | Chưa coordinator/role history/check/preview-source invalidation | A FS-A4/B steps/C safety |
+| K25 | SC pilot chưa dataset/rubric/manual baseline, số phần trăm chỉ đề xuất | Cả nhóm AC18/B4-T07 |
+| K26 | Thêm KB/settings/safety tăng scope, timeline4h cũ hết là cam kết | Gate plan mới; không cắt P2 âm thầm rồi báo full done |

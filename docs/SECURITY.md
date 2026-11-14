@@ -1,4 +1,6 @@
-# Security — TARGET v2
+# Security — AI-first v4
+
+Nguồn REQ-008/019/021–027/031 tại [requirements](AI_CUSTOMER_SUPPORT_REQUIREMENTS.md). Quy tắc core dưới đây tiếp tục bắt buộc; bổ sung v4 không cấp agent quyền staff hoặc coding subagents.
 
 Phân công hiện hành v3: A fullstack workspace/auth/platform và shared credentials; B fullstack assessment/private GCS/Gemini; C fullstack resolution/Gmail write. Mọi router domain dùng auth/CSRF thật khi release, không harness Principal giả trên Cloud Run. Quy tắc bảo mật nghiệp vụ bên dưới được giữ.
 
@@ -35,3 +37,8 @@ Runtime SA least privilege: SQL Client, từng Secret Accessor, bucket object ac
 Audit actor từ session/system job, ghi cùng business transaction; before/after được lọc, không log raw customer PII. Không có API sửa/xóa decisions/audit. Demo dùng dữ liệu giả, logs chỉ IDs/code/duration. Retention và RBAC production để sau, không tuyên bố sẵn sàng vận hành khách thật.
 
 Database theo CLAIMPILOT_MVP_DB_V1: không token/key/password gốc trong SQL; request_snapshot chứa nội dung thư nội bộ nên chỉ staff/role runtime đúng quyền được đọc, không log snapshot. Runtime không DDL hoặc sửa/xóa decisions/audit; migration job quyền riêng. Schema metadata freeze không thay cho kiểm tra quyền thực tế trên Cloud SQL.
+## KB, settings và agent trust
+Chỉ staff authenticated thấy CMS/settings/progress/sources; mọi mutation Origin+CSRF. KB approved content là nguồn nghiệp vụ, không trusted system instruction/tool permission. Draft/email/file không thể thay prompt/role/guardrails. Agent chỉ nhận whitelisted task fields, không token/PII không cần thiết; raw prompts/output không trả browser hoặc log.
+KB source_reference chỉ text reference được validate/display; không auto fetch, crawl hoặc render HTML. Citation ID/revision phải resolve server-side; excerpt escaped và hạn chế ownership theo case/order. KB/case API không public Help Center.
+Chỉ evidence_analysis là optional toggle; auth, mandatory roles, safe recipients, ownership, staff decision/confirm send không cấu hình tắt. Numeric threshold không thay human confirmation. Không secret editor/payment trong Settings.
+Quality checks pin sources/config/body/case/reply; preview challenge không vào URL/log/localStorage. Send cần revalidate, không dùng token cũ với intent khác. Unknown không retry; manual path không bypass deterministic safety. Runtime quyền DML mới chỉ sau review grants; immutable source/settings/terminal attempts không cho sửa tùy tiện.

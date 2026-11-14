@@ -1,4 +1,6 @@
-# Feature specification — sáu hạng mục, TARGET v3
+# Feature specification — AI-first v4
+
+Nguồn [REQ-001–032](AI_CUSTOMER_SUPPORT_REQUIREMENTS.md). F1–F6 kế thừa lõi v3; F7–F9 dưới đây mở rộng KB/settings/orchestration. Mỗi feature11 thành phần; phần storage/API mới thuộc CR-001 PROPOSED và chưa được code.
 
 Luồng/enum tại [WORKFLOW](WORKFLOW.md), wire tại [API](API_SPECIFICATION.md), persistence tại [DATABASE](DATABASE_DESIGN.md). Mỗi hạng mục đủ 11 thành phần; acceptance IDs tại [matrix](ACCEPTANCE_MATRIX.md).
 
@@ -112,3 +114,41 @@ Config `policy_version=demo-v2`, `not_received_grace_days=2`, `return_window_day
 ## Owner theo phần fullstack
 
 F1 decisions/lifecycle C + A conversation/core + B manual; F2 C tự UI/API/Gmail; F3 B tự UI/API/policy/text; F4 A tự auth/UI/cloud/sync, B/C dùng real auth ở router own; F5 fixtures domain trong BASE/own tests và ALL1, không vai trò demo; F6 B tự UI/API/ảnh/GCS/Gemini, A truyền raw inbound qua port. Xem TASK FS và SHARED_CONTRACTS, không dùng phân tầng cũ để chờ người khác làm hộ.
+## F7 — Knowledge Base có duyệt và citation (REQ-012–015)
+1. **Objective:** agent trả lời từ tri thức doanh nghiệp có nguồn/phiên bản.
+2. **User Story:** staff soạn, submit, duyệt, tìm bài và kiểm căn cứ trong cùng workspace.
+3. **Acceptance Criteria:** draft/pending_review/approved/archived phân biệt; chỉ approved published effective non-conflicting retrieval; chỉnh published tạo revision mới.
+4. **UI/UX:** Knowledge tab/list/filter/editor/history, source drawer đúng revision, overdue/conflict badges.
+5. **API Contract:** /knowledge CRUD revision/submit/approve/archive/conflict và SourceRef trong API.
+6. **Error Handling:**422 input,409 stale edit/state,503 storage; giữ form và không báo publish thành công giả.
+7. **Edge Cases:** không nguồn/chỉ draft/hết hạn/nhiều nguồn trái nhau/publish khi writer đang chạy.
+8. **UI States:** loading/empty/dirty/submitting/approved/archived/conflicted/overdue/read-only history.
+9. **Test Cases:** FS-B2-T04..T06, FS-B4-T04/T06, AC15/17.
+10. **DoD:** round-trip DB+browser, source refs sau reload đúng revision, rejected sources không xuất trong writer, CR/migration được duyệt.
+11. **Out of Scope:** public Help Center, crawler/vector DB, omnichannel, AI tự publish.
+
+## F8 — Business settings và Data & Integrations (REQ-016–020)
+1. **Objective:** staff hiểu dữ liệu/cấu hình agent sử dụng và chỉnh được cấu hình hợp lệ.
+2. **User Story:** đổi tên/ngôn ngữ/tone/optional role và biết revision đã lưu.
+3. **Acceptance Criteria:** server-confirmed save, validation/conflict; config mới chỉ áp dụng nội dung mới; guards mandatory bất biến.
+4. **UI/UX:** Data tab orders/policy/KB provenance và Gmail sync status; Settings tab forms, unknown/null rõ.
+5. **API Contract:** /orders,/policies,/settings/business,/settings/agents; shared SettingsSnapshot.
+6. **Error Handling:** config_unavailable/422/409/503 giữ input, không saved toast nếu fail.
+7. **Edge Cases:**2 tab sửa settings, settings đổi giữa prepare/send, threshold thiếu/không có confidence score.
+8. **UI States:** no-config/loading/clean/dirty/saving/saved/invalid/conflict/unavailable.
+9. **Test Cases:** FS-A3-T12/T13, FS-C2-T05, AC16/17.
+10. **DoD:** persistence/reload/version/history/effects-on-new-reply + source visibility; approved CR và protected API.
+11. **Out of Scope:** cấu hình secrets/payment từ UI, tắt safety/auth/confirm, multi-tenant.
+
+## F9 — Agent orchestration và safety/quality (REQ-006–011/021–032)
+1. **Objective:** tự chuẩn bị hồ sơ đáng kiểm chứng, staff kiểm soát ngoại lệ/quyết định/send.
+2. **User Story:** thấy bước AI đang làm, nguồn và lý do chưa thể trả lời.
+3. **Acceptance Criteria:**6 roles, persisted attempt/time/source/status; required failure không run completed; stale không ghi đè manual; manual cũng qua safety.
+4. **UI/UX:** AgentProgress, source/review warnings, retry/manual path, QualityPanel và final preview; một panel lỗi vẫn xem history.
+5. **API Contract:** agent-runs, sources, reply checks/preview và send token; không agent send endpoint.
+6. **Error Handling:** quality_unavailable/quality_blocked/stale_preview/source_context_changed, không auto resend.
+7. **Edge Cases:** crash/retry, conflicting agents, malicious email/KB, unknown Gmail, source/config đổi sau preview.
+8. **UI States:** queued/running/completed/failed/waiting_data/stale/skipped; run review_required; quality passed/blocked/stale/failed.
+9. **Test Cases:** FS-A4-T06, FS-B4-T05/T06, FS-C2-T06/T07, FS-C3-T14/T15, AC14/17/18.
+10. **DoD:** persisted orchestration và check binding kiểm bằng concurrency/fault/browser; live integration nối thật, pilot SC đo riêng.
+11. **Out of Scope:** autonomous staff decisions/send/fulfillment/close, agent tự đổi policy/guardrails,6 microservices.

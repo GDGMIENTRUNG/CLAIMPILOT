@@ -11,3 +11,5 @@ beautifulsoup4>=4.12,<5
 pytest>=8,<10
 httpx>=0.28,<1
 groq>=0.37,<2
+argon2-cffi==25.1.0
+Pillow>=11,<13

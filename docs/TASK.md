@@ -1,34 +1,29 @@
-# Task board — ba phần fullstack v3
+# Task board — AI-first v4, ba fullstack
 
-A/B/C đều làm UI + API + dữ liệu + tests. Cloud Run là đích bắt buộc; không phân tầng theo công nghệ. Toàn bộ task feature vẫn TODO. Không giao slide/thuyết trình/diễn tập như việc xây sản phẩm. Dữ liệu mẫu tối thiểu là fixture kiểm thử, không một vai trò demo riêng.
+## Cập nhật LOCAL sau yêu cầu chạy mini hackathon
+Đã có implementation chung local (auth/workspace/KB/settings/assessment/composer/checks/preview và adapters), schema0006/20 bảng.111 automated tests và Chrome desktop/mobile smoke đạt; xem IMPLEMENTATION_REPORT. Chưa review độc lập từng FS/96 cases hoặc live Google/cloud, nên các task phía dưới không tự chuyển VERIFIED. CR-001 đã migrate LOCAL theo yêu cầu mới; BLOCKED_CR ở bảng là trạng thái kế hoạch trước đó, cloud/release gates vẫn chưa hoàn tất.
 
-[BASE và interfaces](SHARED_CONTRACTS.md) được chốt chung trước phát triển song song; không chờ A hoàn thiện nghiệp vụ. Mã cũ chỉ đối chiếu ở dòng “Mã cũ” trong từng test case, không còn là task được giao.
+Nguồn [REQ-001–032](AI_CUSTOMER_SUPPORT_REQUIREMENTS.md). Đây là phân rã docs để review; không tự cho phép code/migration/cloud.12 FS IDs được giữ; nội dung mở rộng có nhãn CR-001. Feature chưa được thực hiện bởi lần sửa docs này.
 
-Database đã chốt đặc tả **CLAIMPILOT_MVP_DB_V1: 13 bảng** tại [DATABASE_DESIGN](DATABASE_DESIGN.md). Ngày14/11 đã có models/migration0005/backfill và container local; DB01/DB02/DB04 có evidence local, còn runtime/domain/cloud gates chưa đầy đủ. BASE vẫn IN_PROGRESS do chưa Principal/CaseStore/registry/harness/module shells. Sau BASE, FS tasks chỉ CRUD/business/UI trên schema này, không tự thêm bảng/cột khi lên mốc 50%/80%. Điều này không đánh dấu BASE hoặc feature đã xong.
-
-| ID | Owner | Đầu ra fullstack | Cần khi bắt đầu / lúc ghép | AC | Test | Status |
-|---|---|---|---|---|---|---|
-| BASE | A+B+C, A tổng hợp | DB0005/container/config cloud đã có; còn DTO/module shells/registry/CaseStore/harness | Review schema và code hiện có; không chờ feature | contracts + migration checks | 92 backend tests; FS chưa chạy | IN_PROGRESS |
-| FS-A1 | A | Auth/session/CSRF + LoginPage + shared api client | BASE; B/C dùng Principal stub lúc đầu | AC10 | [FS-A1](test-cases/A_TEST_CASES.md#fs-a1) | TODO |
-| FS-A2 | A | Gmail read/thread/dedupe, queues/conversation/technical queue, fixtures intake | BASE; gọi B assessment/evidence port qua doubles rồi real | AC02/07 | [FS-A2](test-cases/A_TEST_CASES.md#fs-a2) | TODO |
-| FS-A3 | A | Image/Cloud Run/SQL/Secrets, registry/core CaseStore, migration aggregate, health frontend/API | BASE; B/C schema/env manifests để aggregate lúc ghép | AC12 | [FS-A3](test-cases/A_TEST_CASES.md#fs-a3) | TODO |
-| FS-A4 | A | Scheduler/OIDC/DB sync lock/cursor, SyncStatus UI, last_success/deferred và tests | BASE; wiring ports B lúc ghép | AC10/12 | [FS-A4](test-cases/A_TEST_CASES.md#fs-a4) | TODO |
-| FS-B1 | B | Order verification/manual correction/ownership, API + AssessmentPanel | BASE + CaseStore/Principal double | AC03/04 | [FS-B1](test-cases/B_TEST_CASES.md#fs-b1) | TODO |
-| FS-B2 | B | Text AI + năm policy/version/missing fields, result UI và tests | BASE + synthetic message/CaseContext | AC04/11 | [FS-B2](test-cases/B_TEST_CASES.md#fs-b2) | TODO |
-| FS-B3 | B | MIME image ingestion/private GCS/Gemini one-two-side, API + EvidencePanel | BASE + raw MIME fixture/message factory; intake thật khi ghép | AC02/09 | [FS-B3](test-cases/B_TEST_CASES.md#fs-b3) | TODO |
-| FS-B4 | B | Assessment snapshot/manual-vs-AI/version safety, UI warnings, domain coverage/fixtures | BASE; FS-B1..FS-B3 triển khai cùng domain | AC04/06/11 | [FS-B4](test-cases/B_TEST_CASES.md#fs-b4) | TODO |
-| FS-C1 | C | Decisions/resolution/history UI + API/DB transactions nhiều vòng | BASE + context/ownership double | AC01/02/06 | [FS-C1](test-cases/C_TEST_CASES.md#fs-c1) | TODO |
-| FS-C2 | C | AI/manual composer/edit/save/preview/stale-context UI + API | BASE + own decision factory/text provider double | AC04/05/06 | [FS-C2](test-cases/C_TEST_CASES.md#fs-c2) | TODO |
-| FS-C3 | C | Gmail draft/confirmed send/reconcile/idempotency + composer trạng thái và reserve/complete | BASE + fake client/CaseStore, OAuth thật khi nghiệm thu | AC01/05/06/08/10 | [FS-C3](test-cases/C_TEST_CASES.md#fs-c3) | TODO |
-| FS-C4 | C | Fulfillment ngoài app/resolved/close/reopen, UI timeline + tests | BASE + own sent-result factory; A inbound primitive khi ghép | AC01/07 | [FS-C4](test-cases/C_TEST_CASES.md#fs-c4) | TODO |
-| ALL1 | A+B+C | Full acceptance/release trên Cloud Run, không mocks production | cả ba phần ghép, real credentials | AC01–AC12 | [matrix](ACCEPTANCE_MATRIX.md) | TODO |
-
-## Bàn giao và trạng thái
-
-TODO → IN_PROGRESS → REVIEW → VERIFIED; BLOCKED có nguyên nhân/người gỡ. Owner giao cả UI/API/models/tests và manifests shared cần tích hợp; reviewer đối chiếu test IDs/biến thể/evidence trước VERIFIED. MERGE và RELEASE đều bắt buộc theo mốc; PASS phần riêng không tự làm ALL1 PASS.
-
-| Task | Commit/revision | Test IDs + thực tế | Mock/DB/browser/live/cloud | Owner/reviewer/blocker |
+| ID | Owner | Đầu ra UI + API + persistence + tests | Gate/phụ thuộc | Status |
 |---|---|---|---|---|
-| BASE DB/container/config | feat/mvp-db-cloud-run-base (sau20ebb35); revision xem git log | 62 regression trước/92 sau; upgrade cũ/mới/repeat/drift + container smoke đạt | PostgreSQL17 local + container thật; AI/Gmail/cloud NOT_RUN | A+B+C review; billing chưa hoạt động; xem IMPLEMENTATION_REPORT |
+| BASE | A tổng hợp, B/C review | Core DTO/CaseStore/Principal/registry/harness; review CR-001/API v4/settings/source refs | DB0005/container đã có; extension chưa duyệt | IN_PROGRESS |
+| FS-A1 | A | Login/session/CSRF/rate-limit/shared API client bảo vệ cả KB/settings/agents | BASE identity contract | TODO |
+| FS-A2 | A | 5-tab shell, queues/search/filter/conversation, Gmail intake/dedupe/technical queue, data read/fixtures | B/C ports doubles lúc đầu | TODO |
+| FS-A3 | A | CaseStore/composition/Cloud Run; business+agent settings UI/API/storage; aggregate migration sau CR review | Settings storage BLOCKED_CR; cloud billing/IAM kiểm lại | TODO |
+| FS-A4 | A | OIDC/Scheduler/DB lock/cursor/deferred; orchestration coordinator, agent progress/status API/UI | Agent persistence BLOCKED_CR; B/C step ports | TODO |
+| FS-B1 | B | Lookup/ownership/manual correction + order/policy/source context UI/API | Shared CaseContext/UoW | TODO |
+| FS-B2 | B | Text/policy agent; KB CRUD/search/submit/approve/archive UI/API; approved-source retrieval | KB storage BLOCKED_CR | TODO |
+| FS-B3 | B | MIME/private GCS/Gemini evidence agent + EvidencePanel | Existing asset schema; run refs sau CR | TODO |
+| FS-B4 | B | Version/manual/stale protection; citation freshness/conflicts, KB revision tests and datasets | Source/settings snapshot contract | TODO |
+| FS-C1 | C | Staff decisions/resolution/history/snapshot/version, cảnh báo từ AI | BASE; không agent approve | TODO |
+| FS-C2 | C | AI/manual composer + pinned KB/settings sources, safety/quality evaluation UI/API | Checks storage BLOCKED_CR; B retrieval/A config | TODO |
+| FS-C3 | C | Confirmed send/draft/idempotency/unknown/reconcile; kiểm lại check/source/revision tại reserve | Auth/UoW + CR checks | TODO |
+| FS-C4 | C | Manual fulfillment/close/reopen/history; full-loop + pilot timing observations | Không payment; A inbound | TODO |
+| ALL1 | A+B+C | AC01–18/96 test cases/MERGE+RELEASE, SC pilot có dataset/baseline | Real Cloud/Google, extension được duyệt | TODO |
 
-Không chờ task khác VERIFIED mới viết feature mình: dùng frozen contract/doubles trước; chỉ đánh dấu phần live còn thiếu đúng trạng thái. Không cộng số pass để che một test bắt buộc FAIL/BLOCKED/NOT_RUN. [Testing](TESTING_GUIDELINES.md), [prompt](AI_PROMPTS.md), [timeline](IMPLEMENTATION_PLAN.md).
+BLOCKED_CR là trạng thái dependency/biến thể, không thay trạng thái toàn task khi phần độc lập còn làm được. Trước khi bắt đầu phần extension, ghi reviewer, quyết định CR, migration/wire version vào DECISIONS; chỉ sau đó A được tổng hợp chain mới.
+
+## Evidence và bàn giao
+Baseline trước đây: commit fad5fe1, merge main74d0936;13 bảng/203 cột/revision0005,92 backend tests local/image và container/browser smoke lịch sử. Không có bằng chứng live v4.
+Mỗi owner bàn giao task/branch/commit/files/DTO/env/deps delta/test ID và từng biến thể/type(mock,DB,browser,live,cloud)/timestamp/blocker/reviewer. Owner đề nghị REVIEW; người khác xác nhận VERIFIED. A tổng hợp board chung, B/C sửa module/test docs phần mình để tránh conflict.

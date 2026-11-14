@@ -1,4 +1,6 @@
-# Coding conventions — v3
+# Coding conventions — AI-first v4
+
+Nguồn [requirements](AI_CUSTOMER_SUPPORT_REQUIREMENTS.md), core conventions bên dưới giữ nguyên. Baseline13 bảng frozen chỉ phạm vi v3; CR-001 extension cần review, không codegen/migrate trong đợt docs.
 
 - Giữ FastAPI/SQLAlchemy 2/Pydantic 2 và React/TypeScript/Vite; cho phép refactor/component/router/model mới khi đáp ứng workflow, không dựng lại bằng stack khác.
 - Router: HTTP/auth/validation; service: rule/state; ORM: persistence. Không network trong row-lock transaction. State machine theo WORKFLOW, wire API, schema DATABASE_DESIGN.
@@ -17,3 +19,8 @@
 - CaseStore UoW shared được join bởi domain write; B/C sở hữu rule/reserve-complete tương ứng, không lấy ORM domain khác thay CaseContext snapshot.
 - Mocks/Principal stub chỉ test/dev; release startup cấm fake adapter/auth bypass, không return fake success khi dịch vụ chưa cấu hình. Một image/URL Cloud Run, không chia microservice theo developer.
 - Schema khóa CLAIMPILOT_MVP_DB_V1: ORM phải đúng type/null/default/composite ForeignKeyConstraint/partial indexes trong DATABASE_DESIGN. BASE dựng đủ13 bảng một lần, mốc 50%/80% không tự thêm cột. JSON có schema cố định; key/model/provider thay config, không thêm field SQL theo nhà cung cấp.
+## Quy ước bổ sung
+A owns settings/coordinator/shared, B knowledge/retrieval/assessment, C quality/replies. SourceRef/SettingsSnapshot/StepResult có typed DTO chung, nullable confidence explicit, role status enum tách lifecycle. Không dùng any/random hoặc timer UI để giả trạng thái.
+SQL queries parameterized; search escape wildcard, limit refs/snippets/results; không fetch source URL. Approved KB body và settings version immutable, new revisions thay inplace update. LLM output phải validate rồi resolve references server-side.
+Case mutation join UoW; progress persistence không tự bump business version. Hash canonical JSON gồm nội dung và dependency versions; dữ liệu private không log/hash input thô ra frontend. Check/send validation không provider network trong row lock.
+Không thêm keys vào Analysis/policy_snapshot/request_snapshot schema1 để chứa extension. Khi review CR approved phải cập nhật DTO/DB/API/tests đồng bộ trong migration chain mới; không rewrite snapshot đã áp dụng.

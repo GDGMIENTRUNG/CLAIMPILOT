@@ -1,6 +1,6 @@
 # Test cases B fullstack — Assessment + Evidence
 
-**19 cases**, phân công v3; tất cả vẫn NOT_RUN. Nguồn: [task B](../tasks/B_ASSESSMENT.md), [shared contracts](../SHARED_CONTRACTS.md), [workflow](../WORKFLOW.md), [API](../API_SPECIFICATION.md), [testing](../TESTING_GUIDELINES.md), [AC](../ACCEPTANCE_MATRIX.md).
+**26 cases**: 19 kế thừa +7 bổ sung AI-first v4; tất cả NOT_RUN. Nguồn mới: [requirements](../AI_CUSTOMER_SUPPORT_REQUIREMENTS.md). Nguồn: [task B](../tasks/B_ASSESSMENT.md), [shared contracts](../SHARED_CONTRACTS.md), [workflow](../WORKFLOW.md), [API](../API_SPECIFICATION.md), [testing](../TESTING_GUIDELINES.md), [AC](../ACCEPTANCE_MATRIX.md).
 
 ## Cách dùng
 
@@ -268,3 +268,84 @@
 ## Bàn giao B
 
 Đủ test bắt buộc và regression theo domain mới đề nghị REVIEW; reviewer xác nhận VERIFIED theo TESTING_GUIDELINES. ALL1 còn cần AC01–AC12 trên Cloud Run. Mock UI/DB không chứng minh Gmail/Gemini/cloud thật.
+
+## Bổ sung AI-first v4 — CR-001 chưa được duyệt triển khai
+
+Các case mới giữ trạng thái NOT_RUN; fixture/mock không chứng minh live. Storage extension chỉ thử sau review CR và task migrate riêng. ID mới không đổi78 IDs kế thừa.
+
+### FS-B2-T04 — KB CRUD/search/editor và mất kết nối
+
+- **Task / yêu cầu / AC:** FS-B2; REQ-012/015/029; AC15.
+- **Mốc bắt buộc:** MERGE.
+- **Loại kiểm tra:** API/DB/browser.
+- **Điều kiện / dữ liệu:** Staff, CR schema thử; bài nhiều topic/status và editor dirty.
+- **Các bước / biến thể:** Create draft, edit draft, search Unicode/filter/topic/page, invalid body/title, fail save.
+- **Kết quả mong đợi:** Round-trip đúng, không báo saved khi fail; input giữ; invalid422; search có giới hạn/escaped, raw HTML render text.
+- **Kết quả thực tế / evidence / revision / reviewer:** Chưa chạy; chưa có.
+- **Trạng thái:** NOT_RUN.
+
+### FS-B2-T05 — KB duyệt/version/archive và ownership FK
+
+- **Task / yêu cầu / AC:** FS-B2; REQ-012–015/027; AC15.
+- **Mốc bắt buộc:** MERGE.
+- **Loại kiểm tra:** API/PostgreSQL/browser.
+- **Điều kiện / dữ liệu:** Article draft và published revision, staff duy nhất MVP.
+- **Các bước / biến thể:** Submit→approve riêng; sửa approved bằng PATCH; tạo revision mới/publish; thử pointer revision của article khác; archive.
+- **Kết quả mong đợi:** Draft không auto publish; edit approved bị chặn; revision mới riêng, old body giữ; đúng actor/time/history; composite FK chặn sai article; archive giữ citation history và loại retrieval.
+- **Kết quả thực tế / evidence / revision / reviewer:** Chưa chạy; chưa có.
+- **Trạng thái:** NOT_RUN.
+
+### FS-B2-T06 — Retrieval chỉ nguồn eligible
+
+- **Task / yêu cầu / AC:** FS-B2; REQ-008/013–015; AC15.
+- **Mốc bắt buộc:** MERGE.
+- **Loại kiểm tra:** DB/contract.
+- **Điều kiện / dữ liệu:** Draft/pending/approved/archived/expired/overdue/conflict và2 eligible articles.
+- **Các bước / biến thể:** Retrieve tại thời điểm cố định với no-match/query dài/wildcards và approved sources.
+- **Kết quả mong đợi:** Tối đa5 eligible sources, source ID/revision/digest/excerpt resolve thực; nguồn bị loại không lọt prompt; no-match review reason, không bịa câu trả lời hay fetch URL.
+- **Kết quả thực tế / evidence / revision / reviewer:** Chưa chạy; chưa có.
+- **Trạng thái:** NOT_RUN.
+
+### FS-B4-T04 — Citation lịch sử và source freshness
+
+- **Task / yêu cầu / AC:** FS-B4; REQ-007/014/027; AC15/17.
+- **Mốc bắt buộc:** MERGE.
+- **Loại kiểm tra:** DB/API/browser.
+- **Điều kiện / dữ liệu:** Pinned source revision1, rồi publish2/archive/expiry/conflict.
+- **Các bước / biến thể:** Mở source link cũ; check eligibility lại; gửi fabricated source IDs/model digest.
+- **Kết quả mong đợi:** Hiển thị đúng revision1 có stale reason, không redirect2; source forged bị reject; đọc history vẫn được nhưng không dùng stale làm bằng chứng cho phản hồi mới.
+- **Kết quả thực tế / evidence / revision / reviewer:** Chưa chạy; chưa có.
+- **Trạng thái:** NOT_RUN.
+
+### FS-B4-T05 — Late agent completion và nguyên bản manual
+
+- **Task / yêu cầu / AC:** FS-B4; REQ-007–011; AC14/17.
+- **Mốc bắt buộc:** MERGE.
+- **Loại kiểm tra:** concurrency/DB.
+- **Điều kiện / dữ liệu:** Run basis1 có sources/settings, staff đổi order hoặc inbound mới.
+- **Các bước / biến thể:** Hoàn tất role khi context đã đổi; retry và kiểm raw Analysis legacy.
+- **Kết quả mong đợi:** Terminal raw output/history giữ, applied không đè manual; run/step stale và review reason; publish business chỉ bump1 lần; không đổi output schema Analysis0005.
+- **Kết quả thực tế / evidence / revision / reviewer:** Chưa chạy; chưa có.
+- **Trạng thái:** NOT_RUN.
+
+### FS-B4-T06 — Bất đồng nguồn và prompt injection
+
+- **Task / yêu cầu / AC:** FS-B4; REQ-008–010/026; AC14/17.
+- **Mốc bắt buộc:** MERGE.
+- **Loại kiểm tra:** provider fixtures/API.
+- **Điều kiện / dữ liệu:** 2 nguồn mâu thuẫn, email/KB có lệnh bỏ guardrail, evidence inconclusive.
+- **Các bước / biến thể:** Chạy lookup/policy/evidence/retrieval, confidence missing/low/invalid; thử AI yêu cầu publish hoặc URL fetch.
+- **Kết quả mong đợi:** Disagreement/missing được nêu rõ và review_required; không nâng confidence thành1, không tự chọn giải pháp rủi ro, publish/send/tool call bị cấm; manual path vẫn có.
+- **Kết quả thực tế / evidence / revision / reviewer:** Chưa chạy; chưa có.
+- **Trạng thái:** NOT_RUN.
+
+### FS-B4-T07 — Pilot SC-001–007 và rubric nguồn
+
+- **Task / yêu cầu / AC:** FS-B4; SC-001–007; AC18.
+- **Mốc bắt buộc:** RELEASE.
+- **Loại kiểm tra:** pilot/annotated dataset.
+- **Điều kiện / dữ liệu:** Dataset được phép/ẩn danh, case types đủ, reviewer và baseline manual trước pilot.
+- **Các bước / biến thể:** Ghi số mẫu/mẫu số, annotation đúng thread/nguồn/next action, active handling durations; chấm7 metrics.
+- **Kết quả mong đợi:** Có rubric/version/exclusions/median/manual comparison, không tính chờ khách/carrier. Báo từng target đạt/chưa đạt và giới hạn, chưa dữ liệu NOT_RUN; không gắn số95%/30% đề xuất thành kết quả.
+- **Kết quả thực tế / evidence / revision / reviewer:** Chưa chạy; chưa có.
+- **Trạng thái:** NOT_RUN.

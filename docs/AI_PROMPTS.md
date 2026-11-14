@@ -1,43 +1,18 @@
-# Prompt cho ba fullstack và reviewer — v3
+# Prompt — ba fullstack AI-first v4
 
-Mỗi người một phiên/worktree, nhận một feature domain, không tự spawn agent. Mã hiện hành FS-A1..FS-A4/FS-B1..FS-B4/FS-C1..FS-C4; không dùng vai trò backend/frontend/integrations cũ.
+Một người một clone/worktree/phiên, từ cùng baseline main đã review. Agent phần mềm trong sản phẩm khác coding subagents. Không tự spawn. Những prompt dưới đây dùng khi người dùng giao code; đợt đồng bộ docs hiện tại không tự kích hoạt chúng.
 
-## Mở đầu — copy và thay A/B/C
+## A — copy
+> Bạn là A fullstack, triển khai FS-A1..A4 khi được giao. Đọc AGENTS → docs/AI_CUSTOMER_SUPPORT_REQUIREMENTS.md → CONTEXT → WORKFLOW → TASK → SHARED_CONTRACTS → tasks/A_WORKSPACE.md, rồi DATABASE/API/UI/FEATURE/SECURITY/ERRORS/TESTING và A_TEST_CASES. Kiểm code/Git/IMPLEMENTATION_REPORT trước. Giữ baseline0005/13 mappings/container, tự làm shared DTO/Principal/CaseStore/UoW/registry/harness;5-tab workspace/login/search/intake/data/settings/progress/orchestration/Scheduler/Cloud. B owns KB/assessment, C owns writer/safety/send; bạn publish ports sớm và ghép exports của họ. CR-001 chưa duyệt thì không migration/settings/run persistence giả; tiếp tục phần độc lập và nêu blocker. Không tự sửa schema snapshot/wire hoặc vượt phạm vi cloud được giao. Chạy38 test A và regression liên quan, bàn giao evidence/ports/env/deps/reviewer, không tự commit/push/spawn hoặc claim cloud bằng fixture.
 
-> Đọc AGENTS.md, docs/CONTEXT.md, WORKFLOW.md, SHARED_CONTRACTS.md, TASK.md và IMPLEMENTATION_PLAN.md. Tôi giao bạn vai trò fullstack [A Workspace / B Assessment / C Resolution] và các mã FS tương ứng. Đọc task cá nhân, DATABASE/API/UI_UX/features/security/errors và test cases đúng owner. Kiểm Git/code thực tế, giữ thay đổi sẵn có. Tự làm UI, API, persistence và tests trong domain của bạn, dùng BASE frozen contract/test harness khi implementation domain khác chưa có; không chờ người khác viết backend/frontend hộ. Thiếu contract thì đề xuất rõ, báo owner; không tự đổi wire/schema. Dùng mocks chỉ test/dev, Cloud Run release phải nối thật. Thực hiện phần được giao và bàn giao theo test IDs/evidence, không claim live bằng mock, không tự send/refund từ AI/scheduler.
+## B — copy
+> Bạn là B fullstack, triển khai FS-B1..B4 khi được giao. Đọc AGENTS → docs/AI_CUSTOMER_SUPPORT_REQUIREMENTS.md → CONTEXT → WORKFLOW → TASK → SHARED_CONTRACTS → tasks/B_ASSESSMENT.md, rồi DATABASE/API/UI/FEATURE/SECURITY/ERRORS/TESTING và B_TEST_CASES. Kiểm hiện trạng, dùng existing mappings. Tự làm verification/manual/text/policy/evidence và Knowledge Base list/editor/search/revisions/submit/approve/archive, approved retrieval/citations/freshness/conflict; xuất KnowledgePanel/AssessmentPanel/EvidencePanel và retrieve/resolve/step ports. A runtime chưa có thì test harness/doubles theo contract, không chờ toàn backend. KB/step storage cần CR-001 review trước; không thêm JSON keys hoặc migration head riêng. Không auto-publish tài liệu từ AI/URL fetch/send/payment/public ảnh. Chạy26 test B/regression, ghi fixture/DB/browser/live/cloud và pilot chưa đo, gửi manifests A/C, không tự commit/push/spawn.
 
-## Task và tests
+## C — copy
+> Bạn là C fullstack, triển khai FS-C1..C4 khi được giao. Đọc AGENTS → docs/AI_CUSTOMER_SUPPORT_REQUIREMENTS.md → CONTEXT → WORKFLOW → TASK → SHARED_CONTRACTS → tasks/C_RESOLUTION.md, rồi DATABASE/API/UI/FEATURE/SECURITY/ERRORS/TESTING và C_TEST_CASES. Kiểm code/Git; giữ models/migration0005. Tự làm decision/history, AI/manual composer, settings/source snapshots, safety/quality/citations, preview token/confirmed send/draft/unknown/reconcile/fulfillment/close. CaseStore/settings/KB chưa có dùng test doubles đúng ports, release nối thật. CR-001 checks chưa duyệt thì ghi blocker, không fake passed check. Reserve/complete atomic qua shared UoW, network ngoài lock; source/context/revision đổi bắt review lại, idempotency replay không dispatch. Agent/approve/Scheduler không gửi. Live send chỉ task/mailbox controlled rõ ràng và click xác nhận. Chạy32 test C/regression, bàn giao interface/env/deps/evidence/reviewer, không tự commit/push/spawn.
 
-- [A Workspace + Cloud Run](tasks/A_WORKSPACE.md), [test A](test-cases/A_TEST_CASES.md).
-- [B Assessment + Evidence](tasks/B_ASSESSMENT.md), [test B](test-cases/B_TEST_CASES.md).
-- [C Resolution + Communication](tasks/C_RESOLUTION.md), [test C](test-cases/C_TEST_CASES.md).
-
-## BASE — cả ba chuẩn bị, A tổng hợp
-
-Schema đọc từ DATABASE_DESIGN, version CLAIMPILOT_MVP_DB_V1, 13 bảng. Không tự thiết kế lại hoặc bổ sung bảng/cột vì riêng task; ánh xạ đủ model/FK/default/index trong BASE, kiểm DB01–DB12, một Alembic head. Models/migration0005/local DB đã có; đọc IMPLEMENTATION_REPORT trước khi tạo code. Chưa có harness/CaseStore/Principal; không giả chúng đã tồn tại. Các gate domain/cloud còn NOT_RUN thì chưa báo BASE đầy đủ hoặc release hoàn thành. Key/provider/model API cấu hình bên ngoài SQL.
-
-> Review dirty Git/baseline, chốt schema và module metadata/DTO/exports/config manifests. A chuẩn bị CaseStore/Principal/GoogleClientFactory Protocols, registry và migration outline. B/C tự chuẩn bị own module models/DTO/factories, dùng test doubles để bắt đầu fullstack. Không để dependency vào A business runtime chặn B/C. Worktree cùng baseline, không reset/commit hộ. Google project/billing/OAuth/quota do owner phần tương ứng kiểm tra trước release, không thêm nhiệm vụ thuyết trình.
-
-## Tiếp tục phiên
-
-> Đọc task FS mới; nếu nhận bàn giao mã cũ, tìm dòng “Mã cũ” trong ba bộ test để xác định FS-ID hiện hành. Bàn giao: [commit/file/tests/blocker]. Kiểm hiện trạng thay vì tin báo xong. Tiếp tục domain UI/API/tests của bạn; thiếu dependency runtime dùng contract double ở test harness, real integration còn thiếu ghi BLOCKED/REVIEW. Unknown side effect phải đối soát, không retry gửi mù.
-
-## Ghép sản phẩm — A tích hợp, B/C xác minh domain
-
-> Ghép BASE + Workspace + Assessment + Resolution theo registry/ports, không theo thứ tự backend→frontend. Review migration một head/deps/env/wire/CaseStore quyền patch, thay dev doubles bằng implementation thật. B/C tự giải conflict trong domain; A tích hợp shared. Chạy MERGE tests rồi RELEASE/AC01–AC12 trên Cloud Run, kiểm không fake adapters/auth bypass trong production. Không chọn ours/theirs toàn bộ để né conflict.
-
-## Reviewer độc lập
-
-> Review task [FS-ID] trên đúng commit/revision: đọc source contracts, own test IDs và evidence, không mặc định tin tác giả nói done. Đối chiếu mọi biến thể và đúng loại mock/DB/browser/live/cloud; chạy lại kiểm tra liên quan khi có thay đổi, lỗi hoặc evidence thiếu. Không tự sửa kỳ vọng/code/merge/deploy/send ngoài phạm vi review. Báo PASS/FAIL/NOT_RUN/BLOCKED theo test, lỗi/file/ảnh hưởng/owner sửa; chỉ đề nghị VERIFIED khi đủ gate. Một feature dùng mock chưa chứng minh ALL1/Cloud Run release.
+## Tiếp tục và review
+> Đọc task và source đúng revision; kiểm artifact trước khi tin báo done. Nêu phần đã có/còn thiếu, làm phần được giao, thiếu dependency thì tiếp tục việc độc lập và báo đúng BLOCKED_CR/credentials/cloud. Chỉ tests/development được doubles; không mock success trong production. Chủ task đề nghị REVIEW; reviewer khác xác nhận VERIFIED theo từng test/biến thể. AC01–18 không tự PASS từ92 tests baseline. SC pilot cần dataset/baseline/rubric.
 
 ## Bàn giao
-
-```text
-Task FS / owner / domain:
-Branch + commit / Cloud Run revision:
-UI/API/models/tests đã làm:
-Shared schema/env/deps/interface delta cần tích hợp:
-Test IDs/biến thể + thực tế + MERGE/RELEASE + reviewer:
-Loại mock/DB/browser/Google-live/cloud + link evidence sanitized:
-Blocker, phần còn mock và việc cần nối thật:
-```
+Task/owner; branch/commit/revision; files/UI/API/storage đã làm; CR/wire/env/deps delta; test ID/biến thể/result/mock-DB-browser-live-cloud/timestamp; dependency chưa thật/blocker; người nhận/reviewer. A tổng hợp shared files và board, không ours/theirs toàn bộ để né conflict.

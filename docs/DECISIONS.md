@@ -1,4 +1,6 @@
-# Decisions — v3 chốt ngày 13/11/2026
+# Decisions — kế thừa v3 và đề xuất v4
+
+D01–D23 dưới đây ghi lịch sử v3, không tự cấp quyền triển khai extension. Người dùng giao đồng bộ docs theo [requirements](AI_CUSTOMER_SUPPORT_REQUIREMENTS.md); giữ file nguồn đề xuất. D24–D29 mô tả mặc định thiết kế v4, PENDING_REVIEW trước code phần CR.
 
 Các quyết định hiện hành giữ workflow v2, thay phân công phân tầng bằng ba phần fullstack; giới hạn draft-only/một quyết định/modal cũ không có hiệu lực. Đây là thiết kế TARGET, chưa code.
 
@@ -29,3 +31,16 @@ Các quyết định hiện hành giữ workflow v2, thay phân công phân tầ
 | D23 | FK composite + operation snapshots + immutable GCS refs | Chặn gắn sai hồ sơ, lưu đúng nội dung đã xác nhận, đọc đúng ảnh đã đánh giá; Gmail vẫn không exactly-once |
 
 Thay đổi sau: ghi ID/người quyết/thời điểm/lý do/docs-fixture ảnh hưởng, thông báo A/B/C trước merge. API/schema không đổi âm thầm, nhưng phát hiện thiếu thực tế phải được sửa có kiểm soát.
+## Quyết định dẫn xuất v4 — PENDING_REVIEW
+
+Cập nhật local14/11: yêu cầu tiếp theo của người dùng giao chạy mini hackathon local đúng requirements. CR-001 đã được hiện thực trong0006 sau thử clone/migration/data preservation. Quyết định này áp dụng LOCAL; review độc lập/liên thông v4 và quyền triển khai cloud vẫn chưa hoàn tất. D24–D29 giữ rationale thiết kế, không phải kết quả acceptance.
+| ID | Thiết kế đề xuất | Hệ quả/reviewer cần chốt |
+|---|---|---|
+| D24 |5 mục workspace,6 role capabilities; một doanh nghiệp/Gmail/staff | A/B/C vẫn fullstack, không6 services/coding subagents |
+| D25 | KB versioned submit/approve/archive, approved effective sources only | B owner nội dung/C source consumer; cùng account approve riêng, không giả review độc lập |
+| D26 | Business/settings immutable snapshots; mandatory guards không toggle | A owner; optional evidence only, confidence threshold default null |
+| D27 | Persist per-role attempts + citations/checks; freeze13 bảng chỉ corev3 | CR-001 đề xuất7 bảng; A aggregate, B KB/source review, C checks review; chưa authorize migration |
+| D28 | Check/preview pin case/reply/source/settings/content; send revalidate | C owns quality/reserve, B resolves sources, A settings/core; old send wire cần review version transition |
+| D29 |96 test đặc tả, AC01–18, SC pilot đo riêng | Không suy success/accuracy từ92 tests hoặc hứa khung4h đủ scope mới |
+
+Trước triển khai CR: ghi approved/rejected/revised, người dùng/owner/reviewer, ngày, revision docs và lý do; chưa có record thì PENDING_REVIEW. Docs sync không phải reviewer VERIFIED sản phẩm hoặc quyền provision/send.

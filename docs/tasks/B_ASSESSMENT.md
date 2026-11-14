@@ -1,28 +1,17 @@
-# B — fullstack Assessment và Evidence
+# B — fullstack Assessment, Knowledge Base và Evidence v4
 
-## Prompt copy cho AI
+Nguồn [requirements](../AI_CUSTOMER_SUPPORT_REQUIREMENTS.md), [TASK](../TASK.md), [contracts](../SHARED_CONTRACTS.md). Đọc AGENTS/CONTEXT/WORKFLOW/DATABASE/API/UI/security/testing trước code. Lần này đồng bộ docs, chưa code tính năng.
 
-> Đọc AGENTS → CONTEXT → WORKFLOW → SHARED_CONTRACTS → TASK → task này; đọc DATABASE/API/UI_UX/FEATURE/SECURITY/TESTING và B_TEST_CASES. Bạn làm FS-B1..FS-B4, tự làm backend, dùng model sẵn có/viết DTO, API, AssessmentPanel/ManualReview/EvidencePanel và tests. Bạn không là người làm toàn frontend. Dùng frozen CaseContext/CaseStore/Principal doubles từ BASE, không chờ A hoàn thiện backend/cloud hoặc C làm quyết định. Triển khai xác minh/sửa dữ liệu, text AI/năm policy, ảnh MIME/GCS/Gemini một-hai phía và snapshot/version/manual protection. Cung cấp ports cho A intake, publish core patches qua UoW chuẩn; không sửa trực tiếp C decisions/replies. Tự probe Gemini/Storage của phần mình, gửi env/deps và thay đổi interface cho A tổng hợp release, không schema delta riêng. Không payment/gửi mail/ảnh public, không fake production. Kiểm MERGE/RELEASE theo ID, báo đúng live/mocked/BLOCKED.
+## Bốn task
+- FS-B1: Lookup đơn, ownership/manual correction có căn cứ/audit/version, reset decision khi dữ liệu trọng yếu đổi; Assessment/ManualReview và sources UI/API.
+- FS-B2: Text/policy agents và5 nhóm policy; Knowledge Base fullstack list/search/editor/revisions/submit/approve/publish/archive. Retrieval chỉ eligible approved KB, citation đúng version/digest/excerpt và no-match/manual path.
+- FS-B3: MIME image decode/private GCS/Gemini evidence agent một/hai phía, source metadata/current case+order, EvidencePanel/content auth; upload immutable generation và giới hạn byte/pixel.
+- FS-B4: Failed/stale/raw attempt history, manual protection, conflict/expiry/source freshness, KB version tests, representative synthetic dataset/rubric cho pilot. Không công bố accuracy khi chưa đo.
 
-## Việc được giao
+## Ownership và ports
+B assessment/knowledge modules và frontend features tương ứng; A owns shell/settings/orchestrator/shared, C owns reply/check/send. Export KnowledgePanel/SourceList/AssessmentPanel/EvidencePanel, KnowledgeService retrieve/resolve và AgentStepPorts. Core patches qua CaseStore, không sửa trực tiếp C tables hoặc commit lồng.
+Existing TextAnalysisRun/EvidenceAsset/EvidenceAnalysis mappings giữ nguyên. KB/steps extension theo CR-001 PENDING_REVIEW, không tạo metadata/migration riêng. Không dùng text_analysis_runs.output để lưu output6roles ngoài Analysis schema. B đề xuất delta/env/deps cho A aggregate sau review.
 
-BASE ngày14/11 đã có TextAnalysisRun/EvidenceAsset/EvidenceAnalysis trong app/models.py và đủ schema0005; dùng mappings đó (có thể re-export vào domain), không khai báo lại Table/Base/migration. Chưa harness/CaseStore/Principal thật; phối hợp A chốt ports trước ghép. Xem IMPLEMENTATION_REPORT cho phần đã kiểm local.
-
-- **FS-B1:** order verification/manual correction/ownership reset khi đổi đơn; schemas/router + own data service + AssessmentPanel/ManualReviewForm; original AI và sửa tay phân biệt, note/audit bắt buộc.
-- **FS-B2:** Gemini/Groq text explicit provider, classification/extraction, policy demo-v2 đủ năm nhóm và result/missing_fields/next_action UI/API; không đồng nhất vấn đề với mong muốn refund.
-- **FS-B3:** EvidenceService.ingest_message(case,message,raw_bytes), decoder/MIME/byte/pixel/dedupe/private GCS metadata, Gemini one/two-side, evidence router/content auth + EvidencePanel. A chỉ cung cấp saved message/raw MIME qua port; bạn tự test raw fixtures không chờ Gmail intake chạy thật.
-- **FS-B4:** snapshots/assessment date/manual override/late AI and evidence completion safety, cảnh báo UI và tests domain. Review fixture matrix đủ policy/boundary/missing/unknown/one-side, không task chuẩn bị demo.
-
-## Schema, file và start độc lập
-
-Theo CLAIMPILOT_MVP_DB_V1, B dùng TextAnalysisRun/EvidenceAsset/EvidenceAnalysis đã ánh xạ trong app/models.py/schema_v1; không khai báo metadata trùng. Mỗi lần AI text có run riêng, failed/stale/raw outputs không ghi đè; message.analysis chỉ cache đã apply. Ảnh lưu bucket/key/generation/width/height/hash, decode rồi upload object mới và đọc đúng generation. Sau BASE chỉ business/CRUD/API/UI theo schema, không tự thêm cột/index/enum hoặc dùng JSON ngoài cấu trúc phần7 của DATABASE_DESIGN.
-
-Assessment/evidence module backend và feature frontend thuộc B; evidence mappings đã có trong baseline; B quản service/API/DTO trên các bảng đó và chỉ gửi change request nếu phát hiện yêu cầu không thể đáp ứng bằng schema đã chốt. B không tự mở migration head hoặc chỉnh main/App/shared config/lock cạnh tranh. Dependencies text/Storage/image decoder + env gửi A, A tích hợp common runtime.
-
-Domain harness: own model metadata/Session test, CaseStore fake đúng version/audit, Principal test, raw email/order/image factories, provider doubles. Thực hiện UI→router→DB phần mình trước; khi ghép đổi CaseStore/Google credentials thật. Không production auth bypass/mock fallback.
-
-Dữ liệu trọng yếu đổi cần invalidate current_decision_id qua core patch quyền B, không sửa/xóa C decision row. AI finish chỉ publish khi basis còn hợp lệ, raw analysis vẫn giữ; ảnh không tự phán gian lận, không nguyên cớ tự từ chối.
-
-## DoD
-
-[Tests B](../test-cases/B_TEST_CASES.md) đủ MERGE/RELEASE, năm policy/missing/snapshot/manual và ảnh UI/API đúng. Có Gemini ảnh live/private bucket trong bản Cloud Run tích hợp, không claim fixture là live. Giao UI/model/router/ports/env/deps/tests/evidence + reviewer, không chờ A viết backend cho mình.
+## Bắt đầu và nghiệm thu
+Dùng exact DTO doubles cho A services chưa có trong test/dev, không chờ A làm toàn backend. Kiểm sources từ server, model không tự đặt citation IDs. Không fetch URL tài liệu/email, publish từ AI hoặc public ảnh. Mọi input/body render text.
+[26 tests B](../test-cases/B_TEST_CASES.md); MERGE/RELEASE và provider/Storage live evidence khác fixtures. Deliver ports/files/env/deps/test variants/blockers/reviewer; không tự spawn/commit/push/reset, không báo PASS từ thiếu key hoặc CR chưa duyệt.

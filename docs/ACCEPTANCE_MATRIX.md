@@ -1,4 +1,6 @@
-# Acceptance matrix — tiêu chí bàn giao v2
+# Acceptance matrix — AI-first v4
+
+Nguồn [requirements](AI_CUSTOMER_SUPPORT_REQUIREMENTS.md). AC01–12 giữ nguyên; AC13–18 bổ sung v4. Tất cả NOT_RUN; bộ test đặc tả96 cases (A38/B26/C32) khác92 automated tests lịch sử. CR-001 chưa duyệt thì trường hợp storage mới BLOCKED_CR khi thực thi, không đổi tiêu chí.
 
 Mọi dòng khởi tạo NOT_RUN: đây là đặc tả, không bằng chứng đã đạt. “Có code” không thay Google/cloud thật. FR tham chiếu SRS. Ghi kết quả triển khai trong TASK, không sửa tiêu chí để hợp thức hóa lỗi.
 
@@ -25,4 +27,15 @@ Chi tiết kiểm thử theo task: [A fullstack](test-cases/A_TEST_CASES.md), [B
 
 Không gửi mail khách thật, không thực hiện giao dịch thật, không lưu secrets/body thật trong tài liệu. Khi live integration blocked, ghi BLOCKED đúng hạng mục; không thay fixture rồi đánh dấu PASS live.
 
-Phân công AC theo feature v3, mã test FS và owner trong ba bộ test fullstack; từng case có mã cũ để đối chiếu; 78 cases vẫn giữ NOT_RUN. Bản nghiệm thu phải là Cloud Run thật, không task diễn tập. BASE/harness là thiết kế chuẩn bị, không bằng chứng runtime đã có.
+Phân công AC theo feature v3, mã test FS và owner trong ba bộ test fullstack; từng case có mã cũ để đối chiếu; 96 cases hiện hành vẫn giữ NOT_RUN. Bản nghiệm thu phải là Cloud Run thật, không task diễn tập. BASE/harness là thiết kế chuẩn bị, không bằng chứng runtime đã có.
+## Acceptance bổ sung v4
+| ID | REQ / SC | Scenario bắt buộc | Owner/evidence | Status |
+|---|---|---|---|---|
+| AC13 | REQ-001–005/028–032; SC-005 |5 mục điều hướng; search + filters giữ khi back; deep-link/login;390px/keyboard; chuyển panel giữ dirty input; unavailable không giả0 | A+B+C browser/API/DB; A2-T10/T11 | NOT_RUN |
+| AC14 | REQ-006–011; SC-002/007 |6 vai trò/attempt/source/time/status; error/disagreement/missing không completed, stale không đè manual; progress restart/retry đúng | A+B+C DB/fault/browser; A4-T06/B4-T05 | NOT_RUN |
+| AC15 | REQ-012–015; SC-004 | Create→edit→submit→approve→retrieve→citation→new revision→archive; draft/expired/conflict loại khỏi retrieval, link history vẫn đúng | B+C DB/browser; B2-T04..T06/B4-T04 | NOT_RUN |
+| AC16 | REQ-016–020/032; SC-005 | Orders/policy/KB provenance/Gmail last success/deferred; settings round-trip/new revision, invalid/409 giữ input, mandatory guard tắt bị chặn | A+B+C; A3-T12/T13/C2-T05 | NOT_RUN |
+| AC17 | REQ-008–011/021–027; SC-003/007 | Injection/unknown/missing source/agent conflict; manual check; edit/context/KB/settings đổi sau preview chặn send; replay không gửi lại; sent history giữ | A+B+C concurrency/API/browser; C2-T06/T07/C3-T14/T15 | NOT_RUN |
+| AC18 | SC-001–007 | Dataset permitted/versioned, mẫu số/rubric/timestamps/reviewer; manual baseline vs assisted cùng loại case, không tính chờ khách/carrier; công bố từng ngưỡng và hạn chế | A+B+C pilot, B4-T07; SC chưa đo NOT_RUN | NOT_RUN |
+
+SC acceptance là mục tiêu đề xuất, chưa có số liệu production. Báo đủ7 metric, không chỉ chọn metric có lợi. Kiểm human-confirmation và exception safety100% ở test suite không suy ra số liệu pilot khác.

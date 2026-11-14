@@ -1,54 +1,25 @@
-# Context — CURRENT và TARGET v3
+# Context — CURRENT và TARGET AI-first v4
 
-Khảo sát code: 13/11/2026, Asia/Ho_Chi_Minh. Hackathon 14/11/2026, 07:30–11:30, ba fullstack dùng AI; đủ sáu hạng mục, bắt buộc Cloud Run. Sau đợt docs-only, người dùng đã giao triển khai BASE giới hạn: DB đầy đủ + container + cấu hình Cloud Run, tiếp tục trên ứng dụng hiện có.
+## CURRENT local cập nhật sau đợt docs
+Đã chạy localhost8080: auth/session,5-tab workspace, KB/settings có persistence, manual assessment/decisions/composer/check/preview và provider adapters. CR-001 local đã migrate0006,20 bảng, backup/clone kiểm trước khi nâng, giữ dữ liệu cũ. UI desktop/mobile đã smoke với DB/API thật. Gửi Gmail mặc định tắt; cloud/Scheduler/GCS/reconcile/pilot chưa nghiệm thu. Các mục baseline/TARGET bên dưới mô tả lịch sử trước triển khai local; evidence mới trong IMPLEMENTATION_REPORT.
 
-## CURRENT có bằng chứng code
+## Nguồn và thứ tự đọc
+[AI_CUSTOMER_SUPPORT_REQUIREMENTS](AI_CUSTOMER_SUPPORT_REQUIREMENTS.md) là nguồn yêu cầu cho lần đồng bộ docs này. File nguồn giữ nguyên trạng thái đề xuất; tài liệu phụ chuyển thành thiết kế v4 để review. Đọc AGENTS → nguồn yêu cầu → context → WORKFLOW → TASK → SHARED_CONTRACTS → task cá nhân.
 
-| Phần | Entry point | Hiện có |
-|---|---|---|
-| API | backend/app/main.py | health/status/stats/list/detail/sync/retry |
-| DB | backend/app/models.py, schema_v1.py, backfill_v1.py | 13 bảng/203 cột, migration0005; local PostgreSQL17 đã nâng cấp và giữ dữ liệu cũ |
-| Pipeline | backend/app/services/sync.py | lưu email trước AI, extraction/verification/policy/retry/dedupe |
-| Gmail | backend/app/services/gmail.py | raw MIME, readonly, phân trang; chưa lưu thread/ảnh |
-| AI | backend/app/services/ai.py, gemini.py, groq_service.py | provider explicit, schema validation |
-| Policy | backend/app/services/policy.py | chỉ late-delivery shipping-refund, guard delivered cần refactor |
-| Frontend | frontend/src/App.tsx, api.ts, types.ts | list/filter/detail/sync/retry; chưa login/workflow/send/ảnh |
-| Local | Dockerfile, docker-compose.app.yml, infra/ | React/FastAPI một URL8080 + PostgreSQL17; cloud scripts chưa thực thi tạo tài nguyên |
+## CURRENT có bằng chứng lịch sử
+Baseline đã merge main ở74d0936: React/Vite, FastAPI, PostgreSQL17; pipeline Gmail readonly và AI text cơ bản, dashboard list/filter/detail/sync/retry. ORM/schema0005 có13 bảng/203 cột. Đã thử migration mới/cũ/backfill/repeat/drift,92 backend tests và Docker Node22/Python3.11, browser desktop/mobile. Xem [IMPLEMENTATION_REPORT](../IMPLEMENTATION_REPORT.md); đây là lịch sử, không phải chạy lại hôm nay.
 
-## Kiểm chứng BASE ngày 14/11/2026
+Chưa có auth/Principal/CaseStore/registry/harness/thread workflow đầy đủ. Chưa KB, settings doanh nghiệp, agent orchestration/safety/citations hoặc UI5 mục. Code cũ ghi projection legacy; có bảng không có nghĩa luồng nghiệp vụ đã chạy.
 
-- Trước thay đổi: 62 backend tests đạt. Sau BASE: 92 tests đạt trên PostgreSQL17; upgrade mới/cũ, backfill lặp và Alembic check đạt.
-- Backup custom-format mode0600 trong backend/.secrets/backups; migration thử trên database khôi phục trước khi nâng local0004→0005. Fingerprint toàn cột cũ của3 orders/7 complaints không đổi.
-- Docker build thành công bằng Node22/Python3.11; smoke GET UI/assets/API/DB/404 đạt; container tạm không AI/Gmail key vẫn boot/health và tôn trọng PORT9090.
-- Project claimpilot-513010 ACTIVE; preflight báo billing chưa hoạt động. Chỉ có script/config cloud, chưa Cloud SQL/Run/Secrets/Storage/Scheduler thật.
-- Chưa auth, Principal/CaseStore/harness, module shells hoặc workflow v3; pipeline cũ vẫn ghi projection legacy. A/B/C phải nối messages/runs/version/audit bằng nghiệp vụ mới; schema có sẵn không tự thực hiện luồng.
-- 78 test FS, live Google và ALL1 chưa được nghiệm thu. Chi tiết hiện hành trong [IMPLEMENTATION_REPORT](../IMPLEMENTATION_REPORT.md).
+Cloud có scripts chuẩn bị; lần kiểm gần nhất project claimpilot-513010 chưa gắn billing, các billing accounts nhìn thấy đều đóng. Credit người dùng cung cấp kết thúc14/11/2026 không chứng minh billing đã active. Kiểm thực tế trước cloud; không hardcode trạng thái này thành điều kiện thành công. Local app/DB đã được tắt theo yêu cầu trước; đợt docs không mở lại.
 
-## Lịch sử khảo sát trước BASE
+## TARGET
+Workspace AI-first: Tổng quan/Hộp thư/Knowledge Base/Dữ liệu & Tích hợp/Cài đặt. Pipeline intake → lookup → policy/KB và evidence → đề xuất → staff decision → reply writer → safety/quality → staff preview/confirmed send → manual fulfillment/close. Follow-up mở lại cùng thread, nguyên bản/history được giữ.
 
-- Build frontend đạt; backend 31 passed/31 setup errors do không kết nối PostgreSQL trong phiên khảo sát, không toàn suite xanh.
-- Có gcloud CLI; chưa xác minh project/billing/IAM; chưa xác nhận DB current migration, Playwright/live Google/cloud trong đợt docs.
-- IMPLEMENTATION_REPORT ghi Groq từng xử lý email lưu sẵn thành công, Gemini từng timeout. Chưa probe lại; đây không phải kết quả live mới.
-- HEAD khảo sát 64bc6d2, dirty README/models/Gemini/Groq/tests/App và migration0004 chưa commit. Kiểm tra lại trước code, không reset/commit hộ.
+Một doanh nghiệp/Gmail/staff; không multi-tenant, omnichannel, payment, auto-send hay sao chép Chatwoot. AI roles khác developer A/B/C; không tự spawn coding agents.
 
-## TARGET v3 thay thiết kế draft-only
+## Khoảng thiếu storage và quyền đợt này
+13 bảng đủ phạm vi v3, chưa đủ REQ-007/009/012–020 của v4. CR-001 trong DATABASE_DESIGN đề xuất7 bảng mới; tổng20 chỉ là TARGET nếu được duyệt. Không có migration0006 hoặc schema mới được tạo trong đợt này. Dùng existing mappings; phần cần extension giữ BLOCKED_CR cho tới review, không mock production hoặc thêm JSON keys ngoài contract.
 
-Một hồ sơ nhiều email → AI hoặc manual → xác minh/policy/ảnh → nhiều vòng decision/resolution → preview/edit → nhân viên Gửi hoặc Lưu nháp → chờ khách/thực hiện ngoài app → resolved/close; inbound sau đóng mở lại. Send không chạy do AI/Scheduler, không payment API.
-
-Luồng/enum chuẩn [WORKFLOW](WORKFLOW.md), schema [DATABASE](DATABASE_DESIGN.md), wire [API](API_SPECIFICATION.md), UI [UI_UX](UI_UX_SPECIFICATION.md). Code hiện tại là điểm xuất phát, được mở rộng/refactor theo sản phẩm; không freeze những thiếu sót của code vào yêu cầu.
-
-## Phạm vi
-
-Một doanh nghiệp/Gmail/staff account và một đơn/hồ sơ, dữ liệu mẫu. Không multi-tenant/payment/kho/video/push/split-merge UI. Role A/B/C là developers, không ba nhân viên trong app. Tính năng mới vẫn TARGET cho tới AC01–AC12 có bằng chứng.
-
-## Bắt đầu
-
-Database đã chốt **FROZEN_SPEC CLAIMPILOT_MVP_DB_V1**,13 bảng/203 cột tại DATABASE_DESIGN, có DB01–DB12 và quy tắc không tự ALTER sau BASE. Schema đã thành metadata/migration0005 và chạy local. Chỉ DB01/DB02/DB04 đã có evidence local; các gate nghiệp vụ/live/cloud còn thiếu, không suy ra từ 92 tests.
-
-Đọc AGENTS → context này → WORKFLOW → SHARED_CONTRACTS → TASK → task fullstack cá nhân. Đợt BASE đã chạy schema local/container; chưa cloud hoặc gửi thư. Xem CHANGELOG để biết thay đổi thiết kế; kiểm tra TASK để biết thực thi thật.
-
-## Phân công v3 hiện hành
-
-A tự làm UI/API/DB/tests workspace/auth/intake/status và nền Cloud Run; B tự assessment/manual/text/policy/ảnh/GCS; C tự quyết định/composer/Gmail draft-send/lifecycle. Không còn A toàn backend/B toàn frontend/C toàn Google-cloud. [Shared contracts](SHARED_CONTRACTS.md) chốt BASE/ports/module owner/harness để ba người bắt đầu song song. Registry/migration aggregate A tích hợp, model/schema/business B/C tự viết theo frozen design.
-
-12 task FS + BASE/ALL1 trong TASK; 78 tests đã chuyển owner/ID; dòng “Mã cũ” trong mỗi test giữ thông tin đối chiếu, mốc MERGE/RELEASE. Không task slide/thuyết trình; dữ liệu mẫu tối thiểu chỉ fixture. BASE DB/container đã có; harness/domain deployment và tính năng FS còn phải làm.
+## Làm việc
+Giữ12 FS task IDs, mở rộng nội dung theo role: A shell/settings/platform, B KB/assessment/retrieval, C source-aware composer/safety/send. BASE còn thiếu interfaces; B/C dùng doubles trong test/dev.78 test cũ +18 test mới =96 test đặc tả; tất cả NOT_RUN, không suy từ92 automated tests lịch sử. Task/evidence/reviewer tại TASK và TESTING_GUIDELINES.

@@ -70,7 +70,9 @@ def test_dictionary_matches_runtime_metadata():
             if len(cells) == 5 and cells[2] in ('Y', 'N'):
                 fields[cells[0]] = cells
         documented[blocks[i]] = fields
-    assert set(documented) == set(Base.metadata.tables)
+    # The frozen core remains exactly13 tables; CR-001 adds separate tables.
+    assert set(documented) == set(metadata.tables)
+    assert set(documented) <= set(Base.metadata.tables)
     assert sum(map(len, documented.values())) == 203
     for name, fields in documented.items():
         table = Base.metadata.tables[name]
@@ -257,8 +259,8 @@ def test_new_and_legacy_migrations_preserve_data_and_repeat(migration_database):
         assert conn.scalar(sa.select(messages.c.id).where(messages.c.gmail_message_id == 'legacy-1')) == uuid5(NAMESPACE_URL, 'claimpilot:legacy-message:legacy-1')
         conn.commit()
         tables = set(sa.inspect(conn).get_table_names()) - {'alembic_version'}
-        assert tables == set(metadata.tables)
-        assert sum(len(sa.inspect(conn).get_columns(t)) for t in tables) == 203
+        assert tables == set(Base.metadata.tables)
+        assert sum(len(sa.inspect(conn).get_columns(t)) for t in metadata.tables) == 203
         # Legacy SERIAL sequence is still usable and new server defaults allow
         # the unchanged intake path to insert without supplying target fields.
         assert conn.scalar(metadata.tables['complaints'].insert().values(

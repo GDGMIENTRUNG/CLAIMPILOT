@@ -1,44 +1,21 @@
-# Thực thi ba fullstack — v3, 14/11/2026 07:30–11:30
+# Implementation plan — AI-first v4
 
-## Đích và phạm vi đợt cập nhật
+Đích [PRD](PRD.md), nguồn [requirements](AI_CUSTOMER_SUPPORT_REQUIREMENTS.md). Kế hoạch này thay timeline bốn giờ v3: yêu cầu mới có KB/settings/orchestration và schema review nên chưa cam kết hoàn tất trong khung thời gian cũ.
 
-Xây sản phẩm đúng WORKFLOW và release lên Google Cloud Run. A workspace/cloud, B assessment/evidence, C resolution/communication; mỗi người tự làm UI/API/DB/tests. Không có nhiệm vụ làm slide/thuyết trình/diễn tập. Fixtures và controlled Google checks vẫn cần để chứng minh sản phẩm hoạt động.
+## Gate0 — Review trước code extension
+A/B/C đối chiếu REQ-001–032, chốt CR-001 (schema+wire), vai trò/nguồn dữ liệu/escalation, người duyệt KB và bộ pilot synthetic hoặc đã được phép/ẩn danh. Một staff account MVP có thể submit và approve nhưng hai hành động phải tách, audit identity thực; không giả người duyệt độc lập. Các quyết định mặc định trong docs là đề xuất, reviewer xác nhận trước triển khai.
 
-Cập nhật14/11: BASE DB13 bảng/203 cột, migration0005/backfill/container/config cloud đã có và kiểm local; chưa auth/CaseStore/Principal/registry/harness, feature v3 hoặc cloud thật. BASE dưới đây chỉ làm phần còn thiếu, không dựng lại ứng dụng/database; xem IMPLEMENTATION_REPORT. Bốn giờ là mục tiêu, không bảo đảm quota/provisioning/merge tự thành công.
+## Gate1 — BASE và phần độc lập
+Giữ DB0005, legacy data và image hiện có. A chuẩn bị DTO/Principal/CaseStore/UoW, registry/feature slots, shell5 mục và auth. B/C làm domain UI/API và test harness từ cùng baseline bằng doubles test/dev. A tổng hợp extension chain chỉ sau gate0; thử fresh+old-data+rerun/drift, giữ mọi ID/body/audit cũ, không tạo KB approved/run/check giả từ legacy.
 
-## Chuẩn bị BASE trước 07:30
-
-Schema khóa CLAIMPILOT_MVP_DB_V1: đủ13 bảng/203 cột trong DATABASE_DESIGN, dùng cho mốc 50%,80% và toàn MVP. Đầu ra BASE cần models/migration/backfill/fixtures đúng schema + DB01–DB12; models/migration/backfill đã làm và kiểm local0005; còn shared runtime/harness/fixtures hợp đồng và các gate nghiệp vụ/cloud. Sau BASE ba người chỉ viết business/CRUD trên schema, không tự thêm cột theo từng feature. Key/model đổi không đòi SQL.
-
-- Cả ba đọc WORKFLOW/schema/API/UI và SHARED_CONTRACTS; review dirty Git, chốt baseline chung, ba worktree. Không reset/commit hộ.
-- A tổng hợp core model fields/registry/CaseStore Protocol/Principal/client factory/migration outline, Cloud Run project/billing/IAM/APIs/SQL provisioning.
-- B review assessment/evidence mappings có sẵn, tự chuẩn bị DTO/env/deps, raw MIME/ảnh và order/message factories, probe text + Gemini ảnh/private bucket.
-- C review decisions/replies/operations mappings có sẵn, tự chuẩn bị DTO/env/deps, reply factories, OAuth compose quyền draft/send/reconcile.
-- Chốt module shells và harness riêng từng domain; không bắt B/C chờ backend A xong. Real implementation ports ghép sau, production không fake.
-
-## Lịch ghép sản phẩm
-
-| Giờ | A fullstack Workspace + Platform | B fullstack Assessment | C fullstack Resolution |
+## Gate2 — Ba phần fullstack
+| Đợt ghép | A | B | C |
 |---|---|---|---|
-| 07:30–07:45 | Kiểm core contracts/harness/cloud readiness | Kiểm DTO/schema own + raw/order fixtures | Kiểm DTO/schema own + decision/reply fixtures |
-| 07:45–08:45 | Login/queues/intake, Run skeleton, core CaseStore | Manual verification/text/policy UI/API | Decision/history/composer UI/API, send reservation |
-| 08:45–09:15 | Ghép registry + deploy URL skeleton; migration aggregate | Nối CaseStore/Principal thật, đánh giá real persisted case | Nối CaseStore/client thật, không chờ B text nếu manual/context fixture |
-| 09:15–10:15 | Follow-up/scheduler/status, Cloud SQL/Secrets wiring | GCS/Gemini ảnh và data/version safety | Gmail send/draft/unknown + fulfillment/close |
-| 10:15–11:15 | Cả nhóm AC01–AC12 trên Cloud Run, sửa lỗi chặn sản phẩm |
-| 11:15–11:30 | Freeze revision cuối, kiểm release/rollback, không thêm tính năng |
+| 1 | Auth/intake/queues/data + contracts | Lookup/policy/manual | Decisions/manual composer/lifecycle |
+| 2 sau CR | Settings persistence/orchestrator/progress | KB revisions/review/search/retrieval/evidence steps | Reply writer/sources/safety checks |
+| 3 | Nối real ports/Cloud/SQL/secrets/Scheduler | Probe text/image/private storage, source staleness | Controlled Gmail send/draft/reconcile |
 
-Không có thời gian riêng thuyết trình trong task phát triển. Nếu preflight cloud/OAuth/quota thiếu, báo BLOCKED sớm; không thay real integration bằng fake để kịp giờ.
+Không chờ A xong toàn nghiệp vụ mới code B/C; contract và test doubles giúp bắt đầu độc lập. Không dùng doubles cho production.
 
-## Dependency theo hợp đồng, không theo người viết backend
-
-Bắt đầu: mỗi phần chỉ cần BASE + test doubles đúng DTO; auth thật/Google/CaseStore chưa sẵn không chặn viết UI→API→DB phần mình. Hợp đồng chốt trước nghiệp vụ, không hai API/schema khác nhau.
-
-Khi ghép: A intake → B.analyze_message/ingest_message, B/C mutations → A.CaseStore, C completion → A.append_message outbound. Không có A business → B business → C business tuần tự. C tự implement reserve/complete, B tự implement evidence/Storage/text, A tự implement sync/cloud/auth.
-
-A tổng hợp Alembic/deps/settings từ manifests B/C, không viết thay router/model/component domain. B/C test metadata ở schema thử độc lập; release dùng aggregate migration một head. Seed kiểm thử: A tạo orders/messages cần cho intake, B attach ảnh/assessment, C factories decision/reply chỉ trong test; không fixture sent giả trên Cloud Run release.
-
-## Kiểm tra và change-control
-
-Mỗi task kiểm MERGE trước ghép; RELEASE và AC01–AC12 trước phát hành. Dùng lại evidence cùng revision khi đủ quan sát, tránh gửi nhiều thư thật không cần thiết. Reviewer xác nhận thực tế, không chỉ số pass.
-
-Thay shared contract có quyết định ghi lại, delta schema/wire/fixtures và owner A tích hợp composition; domain owner đồng ý phần ảnh hưởng. Không tạo thêm microservice/DB riêng để né merge. Nguồn phân công hiện hành TASK FS-*; mã cũ được ghi ngay trong từng test case để đối chiếu khi cần.
+## Gate3 — Release/pilot
+Chạy96 test đặc tả và regression phù hợp; AC01–18 trên revision tích hợp; Cloud thật sau billing/IAM/OAuth/quota checks. SC-001–007 có dataset ID/cỡ mẫu/rubric và manual baseline; thiếu pilot ghi NOT_RUN. Có UI v4 chưa đủ release khi KB/runtime/check còn fake. Rollout pause Scheduler/mutations → backup → migration Job → grant runtime → deploy compatible image → smoke → resume; rollback compatible revision, không drop/downgrade DB.

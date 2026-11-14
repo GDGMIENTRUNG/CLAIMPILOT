@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-11-14 — Đồng bộ docs AI-first v4 theo requirements mới
+
+- Dùng AI_CUSTOMER_SUPPORT_REQUIREMENTS.md làm nguồn REQ-001–032/SC-001–007; giữ nguyên file người dùng cung cấp và trạng thái đề xuất.
+- Cập nhật PRD/SRS/flow/UI/architecture/contracts cho5 mục workspace,6 vai trò AI, KB versioned có duyệt/citations, business/agent settings và source-aware safety/preview.
+- Giữ12 FS IDs và fullstack ownership; A settings/coordinator/platform, B KB/retrieval/assessment, C writer/quality/send/lifecycle. Timeline v4 theo gate, không hứa khung4h cũ đủ scope mới.
+- CR-001 PROPOSED:7 bảng mới/tổng20 nếu được duyệt, không sửa13 bảng0005 hoặc JSON legacy; wire extension chưa được triển khai. Code migration cần review riêng.
+- Giữ78 test IDs cũ, bổ sung18 =96 (A38/B26/C32); AC01–18 và pilot SC cần evidence thực. Không tự nâng trạng thái PASS/VERIFIED.
+- Chỉ sửa Markdown; chưa code tính năng/migrate/provision/khởi động localhost/send hoặc commit/push.
+
 ## 2026-11-14 — BASE DB và container trên ứng dụng hiện có
 
 - Thêm schema snapshot13 bảng/203 cột,13 ORM mappings, migration0005 và repeat-safe legacy backfill; giữ IDs/body/tri-state/timestamps, không sửa migration0001–0004.

@@ -1,5 +1,23 @@
 # ClaimPilot — implementation report
 
+## Mini hackathon local — 14/11/2026
+
+Theo yêu cầu mới “chạy local trước, đúng AI_CUSTOMER_SUPPORT_REQUIREMENTS”, đã triển khai additive CR-001 bằng0006:7 bảng mới, tổng20 nghiệp vụ. Backup + restore thử + upgrade/repeat/drift trên clone rồi mới nâng local, fingerprint tất cả cột cũ của orders/complaints không đổi. Archive private: backend/.secrets/backups/before_ai_first_20261114T031226Z.dump. Không sửa schema_v1/backfill_v1/migration0001–0005.
+
+Đã có local staff Argon2/session/CSRF/Origin/rate-limit/revoke, settings immutable versions, KB draft/submit/approve/archive/conflict/history/retrieval, search/work/technical queues/conversation, manual assessment/decisions/lifecycle, persisted provider attempts, AI/manual composer, deterministic safety checks và HMAC preview pin source/settings/body/version. Idempotency và unknown không auto-resend kiểm bằng fake Gmail + database thật. Ảnh MIME được decode/validate bằng Pillow và lưu local private; Gemini vision adapter chỉ gọi khi được yêu cầu/có ảnh và key.
+
+Frontend React tiếng Việt có5 mục, responsive390px, source viewer, agent progress, settings/forms, knowledge editor, composer và preview; đã build thành công. Browser mới dùng Chrome desktop1512px/mobile390px, server thật8082 + schema PostgreSQL tổng hợp riêng: lưu settings → tạo KB có expiry/review date → submit/approve/history → quyết định → composer/manual/save/preview/citation → settings đổi vô hiệu preview → staff review-context → quyết định mới không mang body hoặc safety status của quyết định cũ. Không tràn ngang/JS error. Không sync/AI/send thật và không ghi vào bảng workspace8080.
+
+Kiểm chứng cập nhật:122 automated backend tests PASS (92 baseline/regression +30 local acceptance trong test_ai_workspace),2 browser scenarios PASS desktop/mobile, frontend build PASS; Alembic0006/head và check không drift. Preview contract alias check/quality_check được kiểm riêng sau regression (1 PASS). Các regression API v3 chạy trên legacy_api (không mounted trong app hiện hành); API có auth mới được kiểm riêng. Kết quả này không phải toàn bộ96 cases tài liệu/AC01–18/pilot.
+
+Lượt tiếp tục đã sửa nhánh AI success bị autoflush trạng thái trung gian không hợp lệ; reacquire case lock sau provider, giữ manual/inbound mới khi output/timeout về muộn. Threshold thiếu calibrated confidence phải review_required; không tự gán điểm. Nguồn/check được gắn đúng reply_writer run theo reply_id, UI không lấy safety cũ cho quyết định mới. Review-context giữ body, tăng reply revision, có audit và yêu cầu preview mới; chưa hỗ trợ remote-draft override fields. Inbound của thread từng non-complaint mở lại classification. Thêm KB expiry/review controls, topic/paging/history. Không đổi schema/migration trong lượt tiếp tục;3 orders/7 complaints vẫn có, không seed business settings/KB vào DB chính. Chưa commit/push.
+
+Giới hạn hiện hành: chưa live Gmail/Gemini/Groq trong đợt này, chưa Cloud/Scheduler/GCS adapter production, chưa reconciliation UI đầy đủ hoặc gửi từ draft đã lưu. ENABLE_GMAIL_WRITE mặc định false; scope compose và mailbox binding thật là bắt buộc. Safety local là deterministic checks/nguồn/version, chưa có đánh giá semantic đầy đủ hoặc SC pilot. Không tự tạo business settings/KB approved/mẫu phân tích thành công để làm app trông hoàn tất. Chưa commit/push. Local đang phục vụ cùng origin tại http://localhost:8080 bằng host Python + PostgreSQL container.
+
+## Đồng bộ docs AI-first v4 — 14/11/2026
+
+Người dùng giao viết lại bộ Markdown dựa trên docs/AI_CUSTOMER_SUPPORT_REQUIREMENTS.md (file nguồn giữ nguyên). Đã cập nhật scope5-tab/KB/settings/agent orchestration/quality/citations, ownership12 FS tasks, traceability REQ-001–032/SC-001–007, API extension và CR-001 đề xuất7 bảng mới. Thêm18 test đặc tả, tổng96 (A38/B26/C32), chưa chạy feature tests v4. Chỉ docs; không sửa code/schema_v1/backfill/migration/env/cloud, không mở localhost hoặc gửi mail. Các số92 tests/13 bảng/203 cột và cloud status bên dưới là evidence lịch sử của baseline, không chứng minh v4 đã triển khai. CR/migration/wire extension cần review/authorization riêng.
+
 ## BASE thực hiện ngày14/11/2026 — DB/container/cấu hình Cloud Run
 
 Tiếp tục trên ứng dụng hiện có, không xây lại UI/pipeline. Phạm vi đã làm: schema/model/migration/backfill, container cùng origin và scripts cloud chờ billing. Bàn giao Git theo yêu cầu người dùng qua nhánh `feat/mvp-db-cloud-run-base`, đích merge `main`; tra `git log` để lấy revision chính xác. Revision ứng dụng trước BASE là `20ebb35`.

@@ -1,12 +1,16 @@
-# Testing guidelines — fullstack v3
+# Testing guidelines — AI-first v4
+
+Nguồn [requirements](AI_CUSTOMER_SUPPORT_REQUIREMENTS.md). Bộ cũ78 case giữ IDs/nội dung; bổ sung18 case =96 (A38/B26/C32). Những dòng78/A32/B19/C27 trong phần dưới mô tả bộ kế thừa; không phải tổng hiện hành. Sau khi người dùng giao triển khai local, đã có tests runtime mới và browser/API/PostgreSQL thật với fixture tổng hợp; xem [implementation report](../IMPLEMENTATION_REPORT.md). Không tự chuyển toàn bộ96 cases/variants sang PASS hoặc VERIFIED từ tổng số automated tests.
+
+Chạy runtime local bằng `cd backend && .venv/bin/pytest -q tests`. `test_ai_workspace.py` dùng app có auth hiện hành và schema PostgreSQL ngẫu nhiên; tests API baseline dùng legacy_api không mounted. Browser v4: `cd frontend && npm run build && npm run test:e2e`, tự khởi động server/schema tổng hợp riêng8082, không cần credential ứng dụng hoặc Google và không ghi vào bảng workspace8080. Không dùng browser suite legacy làm bằng chứng v4.
 
 ## Bộ test theo phần sản phẩm
 
-- [A Workspace + Cloud Run: 32 cases](test-cases/A_TEST_CASES.md), FS-A1..FS-A4.
-- [B Assessment + Evidence: 19 cases](test-cases/B_TEST_CASES.md), FS-B1..FS-B4.
-- [C Resolution + Communication: 27 cases](test-cases/C_TEST_CASES.md), FS-C1..FS-C4.
+- [A Workspace + Cloud Run: 38 cases](test-cases/A_TEST_CASES.md), FS-A1..FS-A4.
+- [B Assessment + Evidence: 26 cases](test-cases/B_TEST_CASES.md), FS-B1..FS-B4.
+- [C Resolution + Communication: 32 cases](test-cases/C_TEST_CASES.md), FS-C1..FS-C4.
 
-78 cases được phân bổ lại từ bộ trước, không tính số test là số tính năng hoàn thành. Mỗi test có dòng “Mã cũ” để đối chiếu ID cũ/mới; báo cáo mới dùng FS-ID. Toàn bộ cases vẫn NOT_RUN, task vẫn TODO. MERGE trước ghép, RELEASE trước nghiệm thu sản phẩm, không mốc diễn tập trình bày.
+78 cases kế thừa cộng18 case v4 thành96 cases, không tính số test là số tính năng hoàn thành. Các test kế thừa có dòng “Mã cũ”;18 case mới dùng FS-ID hiện hành. Toàn bộ cases vẫn NOT_RUN, task feature vẫn TODO; BASE IN_PROGRESS. MERGE trước ghép, RELEASE trước nghiệm thu sản phẩm, không mốc diễn tập trình bày.
 
 Mỗi fullstack tự viết/chạy UI/API/DB tests phần mình. [BASE harness và ports](SHARED_CONTRACTS.md) cho phép dùng test doubles đúng contract khi domain khác chưa có runtime; không phải quyền chạy mocks trên Cloud Run release. Variants trong case cần kết quả từng biến thể, không PASS cả nhóm từ một happy path.
 
@@ -110,3 +114,11 @@ Parsing MIME Unicode/HTML, Gmail pagination, dedupe, failed retry, non-complaint
 A contract tests CaseStore/Principal/GoogleClientFactory/metadata registry; B/C tự test routers/models/components với harness. B test late AI/manual protection, C test reserve-send-completion. Khi ghép chạy lại CaseStore integration bằng PostgreSQL thật và full-loop AC01–AC12; mọi development doubles phải thay real adapters, production startup cấm auth bypass/fake data.
 
 Fixtures chuẩn bị theo domain (A orders/messages; B policy/evidence; C decisions/replies), không nhiệm vụ làm slide/diễn tập. Precondition sent chỉ factory trong isolated tests; live release cần actual controlled send. [RELEASE_CHECKLIST](RELEASE_CHECKLIST.md) thay tài liệu trình diễn. Cùng một live evidence được reuse khi revision/data đúng và chứng minh từng assertion, không tạo mail thử dư.
+## Test v4, CR và pilot
+Mỗi case mới có variant và expected result cụ thể trong file role; tất cả NOT_RUN tới khi chạy đúng revision. Schema extension test chỉ sau CR-001 được review và giao migration; trong docs-only dùng validation tĩnh, không khởi động DB/migrate để giả evidence.
+- Knowledge fixtures: draft/pending/approved/archived, effective/expired/review-overdue/conflicting,2 revisions cùng article và quote nguồn khác nhau. Retrieval5 kết quả max, citation ID/digest phải resolve đúng allowed revisions.
+- Agent fixtures:6 roles deterministic/fake provider rõ loại; required failed/waiting/stale và optional skipped, interrupted attempt/retry, confidence null/invalid/low; không progress giả từ timeout UI.
+- Config fixtures: valid new version, invalid enum/name/threshold,2-tab conflict và sửa guardrail bị từ chối. Save/reload/failed save; reply cũ giữ nguồn/settings, preview mới khi settings đổi.
+- Quality fixtures: manual vs AI, request info không có KB, forged IDs, unverified order facts, injection, unsupported refund claim, nguồn archive sau preview, inbound race, idempotency replay sau KB đổi.
+- Performance/usability pilot: SC-001–007 dùng dataset ID/hash, n đủ và loại case; source correctness rubric chấm claim + citation, annotation/reviewer độc lập nếu có. SC-006 manual và assisted cùng case complexity; median active handling time, trừ chờ khách/carrier. Nêu sample size, excluded cases và median, không đặt kết quả mong muốn thành số đã đo.
+- RELEASE v4 cần schema/gates, Cloud thật và AC01–18. Partial P1/P2 missing hoặc CR chưa duyệt được ghi rõ, không claim toàn sản phẩm.

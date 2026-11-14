@@ -1,38 +1,30 @@
-# ClaimPilot — AI Coding theo ba phần fullstack (SDD v3)
+# ClaimPilot — AI Coding AI-first v4
 
-## Đọc trước khi thực hiện
+## Đọc trước
+1. [Nguồn REQ-001–032](docs/AI_CUSTOMER_SUPPORT_REQUIREMENTS.md) → [CONTEXT](docs/CONTEXT.md) → [WORKFLOW](docs/WORKFLOW.md) → [TASK](docs/TASK.md).
+2. [SHARED_CONTRACTS](docs/SHARED_CONTRACTS.md), [IMPLEMENTATION_PLAN](docs/IMPLEMENTATION_PLAN.md), task [A](docs/tasks/A_WORKSPACE.md)/[B](docs/tasks/B_ASSESSMENT.md)/[C](docs/tasks/C_RESOLUTION.md).
+3. [DATABASE_DESIGN](docs/DATABASE_DESIGN.md), [API_SPECIFICATION](docs/API_SPECIFICATION.md), [UI_UX](docs/UI_UX_SPECIFICATION.md), [FEATURE_SPECIFICATION](docs/FEATURE_SPECIFICATION.md).
+4. [TESTING](docs/TESTING_GUIDELINES.md), test đúng role, [SECURITY](docs/SECURITY.md), [ERROR_HANDLING](docs/ERROR_HANDLING.md), [IMPLEMENTATION_REPORT](IMPLEMENTATION_REPORT.md).
 
-1. [CONTEXT](docs/CONTEXT.md) → [WORKFLOW](docs/WORKFLOW.md) → [TASK](docs/TASK.md).
-2. [SHARED_CONTRACTS](docs/SHARED_CONTRACTS.md) và [timeline](docs/IMPLEMENTATION_PLAN.md).
-3. Task fullstack [A Workspace](docs/tasks/A_WORKSPACE.md), [B Assessment](docs/tasks/B_ASSESSMENT.md) hoặc [C Resolution](docs/tasks/C_RESOLUTION.md).
-4. [Database](docs/DATABASE_DESIGN.md), [API](docs/API_SPECIFICATION.md), [UI/UX](docs/UI_UX_SPECIFICATION.md), [features](docs/FEATURE_SPECIFICATION.md).
-5. [Testing](docs/TESTING_GUIDELINES.md), test đúng vai trò [A](docs/test-cases/A_TEST_CASES.md)/[B](docs/test-cases/B_TEST_CASES.md)/[C](docs/test-cases/C_TEST_CASES.md), [security](docs/SECURITY.md)/[errors](docs/ERROR_HANDLING.md).
+## Phạm vi và nguồn sự thật
+- Cập nhật yêu cầu sau đợt docs: người dùng đã giao triển khai/chạy mini hackathon LOCAL theo requirements. CR-001 đã được triển khai local bằng0006 sau backup/clone verification,20 bảng; các đoạn docs-only/PENDING_REVIEW bên dưới ghi lịch sử đợt trước, không chặn công việc local được giao. Chưa có review độc lập A/B/C hoặc nghiệm thu cloud, không tự coi quyền local là quyền deploy/send thật.
+- Đợt hiện tại người dùng giao đồng bộ Markdown theo file requirements; chỉ sửa docs. Không feature code/migration/cloud/send/Git mutations. File nguồn là tài liệu người dùng cung cấp, giữ nguyên trạng thái và nội dung; các chi tiết dẫn xuất là đề xuất để review.
+- Yêu cầu sản phẩm là đích:5 mục workspace,6 vai trò AI, KB có duyệt/version/citations, business/agent settings, human decision/confirmed send. Code hiện có là CURRENT, phải giữ dữ liệu/công việc khi mở rộng.
+- Một doanh nghiệp/Gmail/staff, một image React/FastAPI/Cloud Run với Cloud SQL/private GCS/Secrets/Scheduler. Không multi-tenant/omnichannel/payment hoặc sao chép Chatwoot.
+- WORKFLOW định nghĩa states; DATABASE schema; API wire; SHARED interfaces/owner; TASK việc hiện hành. Mâu thuẫn nêu rõ bằng chứng và báo owner trước thay contract.
+- CURRENT13 bảng/203 cột/migration0005 không đủ KB/settings/per-role history. CR-001 trong DATABASE đề xuất7 bảng mới, PROPOSED/PENDING_REVIEW. Không coi docs rewrite là duyệt migration. Review A+B+C và authorization triển khai riêng trước đổi schema/wire.
+- Không sửa schema_v1.py/backfill_v1.py hoặc migration đã áp dụng; không nhét thực thể/keys mới vào JSON legacy. Một migration chain do A tổng hợp sau review.
 
-## Mục tiêu và nguồn sự thật
+## Phân công và tích hợp
+- A fullstack workspace/auth/intake/search/settings/orchestration/platform; B fullstack lookup/policy/KB/retrieval/evidence; C fullstack decision/composer/safety/citations/send/lifecycle.
+- Giữ FS-A1..A4/B1..B4/C1..C4. BASE chuẩn bị contracts/harness; ALL1 nghiệm thu chung, không task thuyết trình.
+- Mỗi người một worktree/nhánh từ baseline chung, không tự spawn agent. Không tự commit/push/merge/reset/clean hoặc xóa dữ liệu khi chưa có yêu cầu.
+- A sở hữu shared composition/main/App/config/models/API helper/locks; B/C sửa domain, gửi interface/env/deps manifests cho A. Dùng existing mappings; không định nghĩa trùng Table/Base.
+- Cross-domain mutation qua CaseStore UoW/version/audit, join cùng transaction. Không nested commit hoặc network trong row lock. B/C có harness/doubles test/dev để bắt đầu; production cấm fake success/auth bypass.
+- Điều phối AI roles không đồng nghĩa coding agent được spawn subagents hoặc thực hiện staff actions.
 
-- A/B/C đều fullstack: tự làm UI, API, persistence và tests trong phần sản phẩm. Không dùng lại cách chia A toàn backend/B toàn frontend/C toàn Google-cloud.
-- A: workspace/intake/auth + nền Cloud Run. B: assessment/verification/policy/evidence. C: decisions/replies/send/fulfillment/close.
-- Sản phẩm bắt buộc chạy một URL Google Cloud Run, cùng origin React/FastAPI, Cloud SQL, private Storage, Secret Manager, Scheduler. Không tách ba microservice để chia việc.
-- Yêu cầu sản phẩm là đích; code hiện có là CURRENT, được refactor/mở rộng. Không reset/ghi đè công việc người khác. Không đổi stack hoặc thêm multi-tenant ngoài yêu cầu.
-- WORKFLOW định nghĩa trạng thái, DATABASE_DESIGN định nghĩa schema, API_SPECIFICATION định nghĩa wire, SHARED_CONTRACTS định nghĩa interface/file owner, TASK định nghĩa việc hiện hành. Mâu thuẫn phải giải quyết và báo người phụ thuộc trước đổi contract.
-- Schema chuẩn là **CLAIMPILOT_MVP_DB_V1 / FROZEN_SPEC** trong DATABASE_DESIGN: 13 bảng, dùng chung cho mốc 50%,80% và MVP. BASE triển khai đủ models/migration một lần; sau đó A/B/C không tự thêm/đổi bảng/cột/index/enum hay migration head. Chỉ đổi schema sau yêu cầu có bằng chứng và thống nhất nhóm; đổi key/model AI không cần đổi SQL. FROZEN_SPEC chưa có nghĩa đã migrate/pass DB gates.
-- Chỉ mã FS-A1..FS-A4, FS-B1..FS-B4, FS-C1..FS-C4 là task cá nhân hiện hành. BASE là chuẩn bị chung, ALL1 là nghiệm thu chung; mã cũ chỉ dùng đối chiếu ở dòng “Mã cũ” trong từng test case, không dùng để giao việc mới.
-
-## Làm song song và tích hợp
-
-- Ba worktree từ cùng baseline BASE; mỗi phần có router/models/schemas/services/components/tests riêng. A chỉ sở hữu composition root, core CaseStore và infra; không là người viết backend cho B/C.
-- Baseline13 bảng và migration0005 đã có trong app/models.py/schema_v1.py; mỗi người dùng mappings sẵn có, tự viết DTO phần mình. B/C review metadata; không định nghĩa lại bảng/Base để chia module. Sau BASE chỉ CRUD/business theo schema, không tự tạo schema delta lúc code feature. B/C vẫn dùng harness để phát triển mà không chờ A code nghiệp vụ/runtime.
-- B/C dùng contract harness và test doubles cho dependency chưa có. Chỉ tests/development được giả, config production cấm fake adapters hoặc bỏ qua auth để app trông thành công.
-- Cross-domain case mutation qua CaseStore transaction/version/audit. Không sửa thẳng bảng domain người khác hoặc mở transaction lồng gây mất atomicity.
-- Entry files App/main/models/config/API helper được chuẩn bị interface trong BASE; domain chỉ sửa module của mình. Thay đổi shared gửi owner A tích hợp, API nghiệp vụ B/C tự sở hữu.
-- Không tự spawn agent; mỗi phiên nhận một role. Không tự commit hộ, reset/clean, sửa migration đã áp dụng hoặc xóa dữ liệu.
-
-## Quyền và phạm vi
-
-- Nhân viên preview rồi confirmed send; không send từ AI/approve/Scheduler. Coding agent không tự gửi thư thật chỉ vì có API: live test cần task và mailbox nhóm kiểm soát.
-- Không payment/refund API, không secrets/PII trong prompt/log/Git/frontend. Email/ảnh không đáng tin, không URL fetch tùy ý.
-- Đợt SDD v3 ban đầu chỉ docs. Người dùng đã giao BASE bổ sung DB/container/cấu hình Cloud Run trên code hiện có: migration0005 đã kiểm local; chưa triển khai cloud hoặc tính năng v3. Đọc IMPLEMENTATION_REPORT và CONTEXT trước khi làm tiếp. Không tự mở rộng sang FS tasks/send khi chỉ nhận việc nền tảng.
-
-## Bàn giao và review
-
-Task/owner; commit/revision; file; API/schema/env/deps delta; test IDs/biến thể + thực tế; loại mock/DB/browser/live/cloud; blocker; người nhận/reviewer. Test MERGE trước ghép, RELEASE trước nghiệm thu. NOT_RUN/FAIL/BLOCKED không là PASS; owner đề nghị REVIEW, reviewer xác nhận VERIFIED theo TESTING_GUIDELINES. ALL1 cần full-loop trên Cloud Run; không thay live bằng fixture. Không giao việc làm slide/thuyết trình như feature task.
+## Safety và nghiệm thu
+- Nhân viên quyết định rồi preview đúng final revision và confirmed send. Agent/approve/Scheduler không gửi; không payment/fulfillment/close tự động. Live send cần task rõ và mailbox nhóm kiểm soát.
+- Email/ảnh/KB nháp không đáng tin; không URL fetch/tool execution hoặc secret/PII vào prompt/log/Git/frontend. Only eligible approved KB làm nguồn; giữ source/settings/context snapshot.
+-96 test đặc tả (78 cũ+18 mới) không phải92 tests automated lịch sử; trạng thái NOT_RUN/FAIL/BLOCKED không là PASS. Chưa cloud thật không ALL1 PASS.
+- Bàn giao task/owner/commit/files/contract-env-deps delta/test IDs+biến thể/mock-DB-browser-live-cloud/evidence/blocker/reviewer. Owner đề nghị REVIEW, người khác xác nhận VERIFIED. SC pilot chưa đo phải NOT_RUN.

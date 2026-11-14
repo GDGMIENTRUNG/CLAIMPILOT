@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     gemini_timeout_seconds: int = Field(default=30, ge=5, le=120)
     frontend_origin: str = "http://localhost:5173"
     frontend_dist: Path = ROOT.parent / "frontend" / "dist"
+    public_base_url: str = "http://localhost:8080"
+    session_cookie_secure: bool = False
+    local_credentials_path: str = ".secrets/local-access.json"
+    enable_gmail_write: bool = False
     @property
     def token_path(self):
         p = Path(self.gmail_token_path)

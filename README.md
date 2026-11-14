@@ -1,6 +1,26 @@
 # ClaimPilot
 
-ClaimPilot là ứng dụng nội bộ đọc email khiếu nại từ Gmail, dùng AI để trích xuất thông tin, đối chiếu đơn hàng trong PostgreSQL và đề xuất kết quả để nhân viên xem xét.
+## Bản mini hackathon local đang triển khai
+
+Mở **http://localhost:8080**. Tài khoản local: admin; mật khẩu sinh riêng nằm trong backend/.secrets/local-access.json (quyền0600, không Git). Vào **Cài đặt** để nhập tên doanh nghiệp/ngôn ngữ/giọng điệu thực, rồi thêm tri thức và Gửi duyệt → Duyệt & xuất bản. Không seed thương hiệu/tri thức đã duyệt giả.
+
+Mở lại từ repo root: `bash scripts/start-local.sh`. Launcher bật PostgreSQL, chỉ khi cần mới chạy backup/clone verification/migration, tạo tài khoản nếu chưa có, build React và chạy FastAPI cùng origin8080. Không chạy launcher thứ hai khi port8080 đang có server. Ctrl+C tắt server; PostgreSQL vẫn giữ dữ liệu.
+
+CURRENT mới: migration0006 bổ sung7 bảng, tổng20 bảng nghiệp vụ;5-tab UI/auth/KB/settings/manual review/decision/composer/check/preview, AI text và Gemini image adapters, local private evidence. Cloud GCS/Scheduler/release chưa nghiệm thu. Gửi Gmail thật mặc định tắt; cần compose consent, mailbox binding và ENABLE_GMAIL_WRITE=true, nhân viên vẫn phải xác nhận. Draft đã lưu cần reconciliation trước send/update để tránh ghi đè nội dung ngoài Gmail; chưa triển khai UI reconcile hoàn chỉnh.
+
+Image evidence local lưu private backend/.secrets/evidence, không public/static và không giả đã upload GCS. Không tự gọi provider/send khi mở workspace. Thiếu key/provider thì lưu failed attempt và cho manual path. 92 tests baseline là lịch sử; xem IMPLEMENTATION_REPORT cho kiểm chứng mới.
+
+Đã bổ sung **Đối chiếu ngữ cảnh & nguồn** cho phản hồi chưa gửi: giữ body, ghi người xác nhận/ghi chú, ghim nguồn và settings hiện hành, tăng revision và yêu cầu preview mới. Quyết định đổi phải soạn phản hồi riêng; nội dung đang nhập không chuyển sang quyết định mới. KB có hạn hiệu lực/rà soát, lọc chủ đề, phân trang và lịch sử phiên bản. Email bổ sung trong thread từng bị phân loại không khiếu nại sẽ được đưa về chờ phân loại lại.
+
+Kiểm thử local: `cd backend && .venv/bin/pytest -q tests`; browser thật với schema tổng hợp riêng: `cd frontend && npm run build && npm run test:e2e`. Browser runner tự dùng cổng8082, tắt AI/Gmail credentials trong tiến trình test và dọn schema sau khi xong; không sửa dữ liệu workspace8080.
+
+ClaimPilot là workspace AI-first hỗ trợ doanh nghiệp xử lý khiếu nại qua Gmail: điều phối phân tích, tra đơn/policy/ảnh, tìm tri thức đã duyệt và chuẩn bị phản hồi có nguồn; nhân viên quyết định và xác nhận gửi.
+
+## Tài liệu đích AI-first v4
+
+Nguồn mới là [AI_CUSTOMER_SUPPORT_REQUIREMENTS](docs/AI_CUSTOMER_SUPPORT_REQUIREMENTS.md), REQ-001–032. Bộ docs đã đồng bộ5 mục Tổng quan/Hộp thư/Knowledge Base/Dữ liệu & Tích hợp/Cài đặt,6 vai trò AI và kiểm tra nguồn/chất lượng trước gửi. Xem [bản đồ docs](docs/README.md), [task A/B/C](docs/TASK.md), [prompt mới](docs/AI_PROMPTS.md).
+
+Đích sản phẩm vẫn cần review/nghiệm thu theo từng yêu cầu. Theo yêu cầu chạy local sau đợt docs, CR-001 đã được triển khai bằng0006 và có runtime v4 nêu ở đầu file; chưa có review độc lập A/B/C hoặc nghiệm thu Google/cloud. Tổng96 test đặc tả khác số automated tests và không tự chuyển toàn bộ sang PASS. Phần SDD v3 bên dưới là lịch sử baseline, không mô tả đủ scope v4.
 
 > Ứng dụng không tự gửi email, hoàn tiền hoặc thực hiện giao dịch.
 

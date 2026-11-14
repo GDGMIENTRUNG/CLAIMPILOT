@@ -210,8 +210,8 @@ def test_stats_filters_and_detail(client, db):
 
 def test_api_sync(client,monkeypatch):
     gmail,gemini = services()
-    monkeypatch.setattr('app.main.GmailService',lambda: gmail)
-    monkeypatch.setattr('app.main.get_ai_service',lambda: gemini)
+    monkeypatch.setattr('app.legacy_api.GmailService',lambda: gmail)
+    monkeypatch.setattr('app.legacy_api.get_ai_service',lambda: gemini)
     assert client.post('/api/gmail/sync').json()['successful'] == 1
     assert client.post('/api/gmail/sync').json()['skipped'] == 1
     item = client.get('/api/complaints').json()['items'][0]
@@ -301,7 +301,7 @@ def test_policy_uses_database_dates_not_ai_complaint_category(db):
 
 def test_database_error_is_sanitized(client):
     from sqlalchemy.exc import OperationalError
-    from app.main import app
+    from app.legacy_api import app
     from app.database import get_db
     def broken_db():
         raise OperationalError('private connection data',{},RuntimeError('private trace'))
@@ -376,8 +376,8 @@ def test_retry_saved_email_does_not_call_gmail(client, db, monkeypatch):
     db.commit()
     gemini = Mock()
     gemini.analyze.return_value = analysis()
-    monkeypatch.setattr('app.main.get_ai_service',lambda: gemini)
-    monkeypatch.setattr('app.main.GmailService',Mock(side_effect=AssertionError('Gmail must not be called')))
+    monkeypatch.setattr('app.legacy_api.get_ai_service',lambda: gemini)
+    monkeypatch.setattr('app.legacy_api.GmailService',Mock(side_effect=AssertionError('Gmail must not be called')))
     response = client.post(f'/api/complaints/{record.id}/analyze')
     assert response.status_code == 200
     assert response.json()['verified_order']['order_id'] == 'DH001'
@@ -394,7 +394,7 @@ def test_retry_timeout_persists_and_lock_releases(client,db,monkeypatch):
     db.commit()
     gemini = Mock()
     gemini.analyze.side_effect = IntegrationError('gemini_timeout_retry_sync')
-    monkeypatch.setattr('app.main.get_ai_service',lambda:gemini)
+    monkeypatch.setattr('app.legacy_api.get_ai_service',lambda:gemini)
     response = client.post(f'/api/complaints/{record.id}/analyze')
     assert response.status_code == 503
     db.refresh(record)

@@ -1,79 +1,32 @@
-# UI/UX specification — hồ sơ nghiệp vụ TARGET v3
+# UI/UX — Workspace AI-first v4
 
-Cho phép đổi bố cục chi tiết để đáp ứng vòng xử lý, giữ stack/component/CSS hữu ích. Không để giới hạn modal cũ quyết định sản phẩm. Không lộ tên bảng/config/stacktrace trong flow nhân viên.
+Nguồn REQ-001–032 tại [yêu cầu](AI_CUSTOMER_SUPPORT_REQUIREMENTS.md); wire tại API_SPECIFICATION. Chatwoot chỉ tham khảo cách tổ chức, không sao chép tài sản/giao diện.
 
-## Màn hình và wireframe desktop
+## Điều hướng
+Sidebar desktop có nhận diện một doanh nghiệp và5 mục: Tổng quan, Hộp thư, Knowledge Base, Dữ liệu & Tích hợp, Cài đặt. Không giả nút chuyển tenant. Dùng query tab=overview|inbox|knowledge|data|settings; detail giữ ?tab=inbox&case=ID và bộ lọc queue/workflow_status/processing_status/complaint_type/q/page. URL không chứa body/email/token; q từ khóa được giữ trong state phiên UI, không ghi vào URL/log.
 
-```text
-┌ ClaimPilot     Gmail: kết nối | Sync thành công lúc ... | Đồng bộ | Staff/Đăng xuất ┐
-│ Cần xử lý | Chờ khách | Chờ thực hiện | Đã giải quyết | Đã đóng | Lỗi cần kiểm tra  │
-├ Danh sách hồ sơ ──────┬ Cuộc trao đổi ────────────────────┬ Thông tin xử lý ────────┤
-│ mã đơn / chủ đề      │ inbound + outbound theo thời gian │ đơn / xác minh / sửa   │
-│ mức ưu tiên          │ ảnh đính kèm đúng email           │ policy + thiếu gì      │
-│ trạng thái / cập nhật│ timeline quyết định/audit         │ ảnh đơn ↔ ảnh khách    │
-├──────────────────────┴───────────────────────────────────┴─────────────────────────┤
-│ Bước tiếp theo | Phương án + ghi chú | Xem/sửa phản hồi | Lưu nháp / Gửi phản hồi  │
-└───────────────────────────────────────────────────────────────────────────────────┘
-```
-Desktop chi tiết có thể là trang riêng hoặc panel trong dashboard nhưng phải có deep-link `?case=ID`, giữ filter khi quay lại. Chốt MVP: dùng trang/panel chiếm toàn vùng nội dung với nút Quay lại, không modal hẹp chứa toàn workflow. Mobile 390px: list → detail một cột; tabs Trao đổi/Đánh giá/Lịch sử, action ở cuối, không overlay che textarea.
+Tổng quan: workflow counts, xử lý AI tách riêng, agent active/failed/waiting, last sync/deferred và ngoại lệ. Hiển thị unavailable thay số0 khi API lỗi.
 
-## Component và nguồn dữ liệu
+## Hộp thư
+Desktop ba vùng: list có search/filter → ConversationPanel → context với Assessment/Evidence/AgentProgress/Sources; Decision/Composer/Fulfillment trong vùng detail cuộn được. Không modal hẹp. Trở lại giữ filter/page; deep-link phục hồi sau login.
 
-| Component | Nội dung/API |
-|---|---|
-| LoginPage/SessionHeader | auth/me/login/logout; không localStorage session |
-| CaseQueue/CaseList | workflow_counts, priority, order, last_message_at; queue technical cho candidate AI lỗi |
-| ConversationPanel | messages inbound/outbound, subject/body text, attachments; không render HTML email |
-| AssessmentPanel | verified order, ownership, policy reason/version/missing_fields/next_action; sửa dữ liệu thủ công |
-| EvidencePanel | ảnh nguồn rõ, mode một/hai phía, observations/limitations/missing_evidence |
-| DecisionPanel | action + resolution + note; lịch sử không khóa vĩnh viễn |
-| ReplyComposer | latest reply/decision/version, recipient/subject readonly, body editable, save draft/send |
-| FulfillmentPanel | chờ thực hiện, ghi nhận ngoài app + reference, resolved, close/reopen |
-| Timeline | messages + decisions + audit, actor/time, sửa gì và lý do |
+Mobile390px: list→detail một cột, tabs Hội thoại/Đánh giá/Lịch sử. Form/note/body state ở feature parent nên đổi tab không mất; có unsaved edits khi đổi case thì hỏi bỏ/lưu, không tự gửi. Nút không che textarea, keyboard/focus/aria-live và nhãn đầy đủ; thời gian Asia/Ho_Chi_Minh.
 
-## Điều kiện nút và hành vi
+## AgentProgress và Sources
+6 vai trò: intake_classification, order_lookup, policy_assessment, evidence_analysis, reply_writer, safety_quality. Mỗi bước hiển thị queued/running/completed/failed/waiting_data/stale/skipped, attempt/time/source/error. skipped có lý do và không giả completed. Lượt cũ có mục history; trạng thái agent không đổi thành rejected/resolved.
+Nguồn mở bằng ID/version trong app, gồm order/policy/KB/asset; snippet là text escaped. Không có nguồn, bất đồng hoặc stale có banner review_required và đường manual/retry. Confidence thiếu để null; không dựng phần trăm chắc chắn.
 
-| Action | Được dùng khi | Loading/lỗi |
-|---|---|---|
-| Sửa mã đơn/phân loại | hồ sơ chưa closed, không operation gửi đang chạy | form có note; 409 giữ input và lấy context mới |
-| Xác minh thủ công | có order, có căn cứ và note | reset khi đổi đơn; chưa xác minh vẫn gửi yêu cầu thông tin an toàn được |
-| Approve | complaint xác nhận, có order/ownership, resolution/note đủ | policy khác không tự chặn; cảnh báo ngoại lệ |
-| Reject/Request information | complaint xác nhận, note đủ; request cần checklist thiếu gì | không đòi AI completed nếu đã review thủ công |
-| Soạn bằng AI / Viết thủ công | có current decision | AI lỗi giữ dữ liệu, cho chọn thủ công |
-| Lưu nháp | nội dung đã lưu, không stale/unknown/busy/sent | draft_saved chưa đổi sang chờ khách |
-| Gửi phản hồi | các điều kiện server trong API, user đã xem preview | xác nhận To + subject + body cuối; disable double click |
-| Ghi đã thực hiện | latest approve đã gửi, context hiện hành | nêu đây là thao tác ngoài app, không nút thực hiện refund |
-| Đóng | resolved + latest reply sent, không outstanding conflict/unknown | note bắt buộc, đóng không xóa hồ sơ |
-| Mở lại | resolved/closed | lý do, quay về needs_review |
+## Knowledge Base
+List q/topic/status; editor title/body/topic/source_label/source_reference/valid_until/review_due_at. Các trạng thái draft/pending_review/approved/archived; nút gửi duyệt và duyệt/publish riêng, dù MVP dùng cùng một account. Khi sửa published article tạo revision draft mới; agent chỉ đọc revision đã duyệt, còn hiệu lực, không conflict. Trang history mở citation đúng revision cũ với badge nếu bị superseded/archive/expiry; không tự chuyển link cũ sang nội dung mới. Conflict flag có note; editor dirty/validation/409/loading/publish failed giữ input.
 
-## Composer và chống gửi nhầm
+## Dữ liệu & Tích hợp và Cài đặt
+Data: Gmail presence khác connectivity, last_attempt/success/error/deferred/intake failures; xem orders/policy versions/nguồn KB, unknown giữ null, không public API seed/reset.
+Settings: display_name/language/tone, optional evidence role, confidence-review threshold và cấu hình escalation. Lưu phải có server confirmation/revision; invalid422, stale409 giữ form; failure không hiện Saved. Không có nút tắt auth, safety, staff decision/confirm send. Thay settings áp dụng lần tạo nội dung mới, không sửa retroactive reply cũ.
 
-1. Chọn phương án ở DecisionPanel, không dùng một nút Approve-and-send.
-2. Prepare reply; hiển thị đúng recipient, chủ đề và decision nguồn. Preview không phải tạo nháp Gmail.
-3. Edit body → Lưu nội dung (PATCH) → preview. Không cho send khi còn unsaved edits.
-4. Nút chính Gửi phản hồi, nút phụ Lưu nháp vào Gmail. Send xác nhận nội dung cuối một lần; không thêm xác nhận lặp.
-5. Inbound/decision/context mới: banner “Hồ sơ đã thay đổi”, giữ body; cập nhật context và đọc lại trước review-context. Decision mới yêu cầu reply mới.
-6. draft_saved vẫn sửa body local; UI nhắc thay đổi chưa đồng bộ Gmail. Remote edit conflict hiển thị nội dung local/remote; MVP chỉ chọn giữ local có xác nhận hoặc hủy để kiểm tra Gmail, không tự merge.
-7. unknown: “Chưa xác định Gmail đã gửi/lưu hay chưa”; không bật retry mù. sent chỉ nói “Đã gửi qua Gmail”, không nói khách đã nhận/đọc.
+## Decision/Composer và lifecycle
+Giữ semantics WORKFLOW: staff chọn approve/reject/request_information, không Approve-and-send. AI/manual draft → lưu nội dung → xem nguồn và quality findings → preview To/subject/body → confirmed send. Draft Gmail là nút phụ, không coi draft là sent. Edit/new inbound/source/config thay đổi làm check/preview trước mất hiệu lực theo API.
+Unknown hiển thị chưa rõ kết quả, chặn gửi lại mù; sent chỉ nghĩa Gmail đã nhận gửi. Thiếu căn cứ không tự approve/refund/close; cho sửa/manual nhưng vẫn qua safety và xác nhận. Fulfillment ghi thực hiện ngoài app + reference/note; close/reopen theo WORKFLOW. AI/panel lỗi vẫn đọc được history.
 
-## State inventory
-
-- Trang: loading/empty list/no filter match/network error/session expired.
-- Hồ sơ: needs_review/waiting_customer/waiting_fulfillment/resolved/closed; processing badge riêng, không trộn màu AI lỗi và reject.
-- Reply: prepared/draft_saving/draft_saved/sending/sent/failed/unknown + unsaved/stale flags; busy poll có giới hạn.
-- Evidence: no images/one side/ready/pending/completed/failed; thiếu ảnh gốc không khóa xử lý.
-- 401 về login, giữ đường dẫn nhưng không tự replay POST; 403 nêu không thực hiện; 409 giữ draft/note và refresh; 503 giữ nội dung.
-
-## Accessibility và nghiệm thu
-
-Label/validation từng field, keyboard tới mọi action, focus sau navigate/confirm quay lại nút nguồn, aria-live cho kết quả. Không dùng màu làm dấu hiệu duy nhất. Ảnh có alt và phóng to trong viewport, không tràn 390px. Hiển thị giờ Việt Nam, policy demo, active text provider/model thật. Test theo [acceptance](ACCEPTANCE_MATRIX.md), không chỉ screenshot đẹp.
-
-## Quyền sở hữu fullstack
-
-A làm WorkspaceShell/Login/queues/conversation/SyncStatus và API/dữ liệu tương ứng; B tự Assessment/ManualReview/Evidence cùng router/models/providers; C tự Decision/ReplyComposer/Fulfillment/History cùng router/models/Gmail write. Không còn B viết toàn frontend. BASE chốt feature slots/props `{caseId,onCaseChanged}`; A compose ba panel, domain UI tự fetch API own, cùng shared api client/session contract. Mỗi panel loading/error độc lập, event invalidate không tự gửi lại mutation. Không task làm slide/diễn tập trong UI backlog.
-
-Schema CLAIMPILOT_MVP_DB_V1 đã có fulfillment/closure actor/time/reference/note, proposed_amount/currency, lịch sử text runs và intake failures. UI đọc API projection, không yêu cầu agent tự thêm cột cho timeline hoặc trạng thái. Lỗi fetch/parse chưa có case hiển thị metadata sanitized từ integrations/intake-failures trong vùng lỗi, không mở detail complaint giả; AI run history là lưu trữ nội bộ, không bắt thêm màn hình debug AI.
-
-Số tiền đề xuất chỉ hiển thị khi có căn cứ từ order và decision.proposed_amount; currency VND. Total amount chưa biết thì không tự điền0/ước đoán hoặc hứa đã hoàn tiền. Dữ liệu thực hiện/đóng lấy timestamp/actor/reference/note theo API, timeline giữ các lần trước qua audit.
-
-Ảnh đơn dùng evidence_kind packing/delivery để gắn nhãn “Ảnh đóng gói” hoặc “Ảnh giao hàng”; ảnh khách kind customer. Không suy ra giai đoạn chỉ từ thời điểm upload và không dùng ảnh đóng gói để khẳng định đã giao thành công.
+## Owner và nghiệm thu
+A shell/login/nav/queues/settings/data/progress container; B KB editor/Assessment/Evidence/source browser; C Decision/Composer/Quality/Fulfillment. Panel props caseId/onCaseChanged; nguồn data/settings revision qua shared contracts.
+AC01–18; desktop/mobile keyboard, dirty form qua tab/401, unavailable numbers, nguồn nháp không làm căn cứ, safety/error/stale hiển thị đúng.
