@@ -1,5 +1,9 @@
 # ClaimPilot — implementation report
 
+## Đăng nhập demo local theo yêu cầu mới
+
+Đã bật `LOCAL_DEMO_LOGIN=true` trong env private của máy: username/password bất kỳ không rỗng được tạo session và vào workspace. Thêm public `GET /api/auth/config`; UI hiển thị demo theo server, không còn mật khẩu admin hoặc auto-login hardcode. Cookie/CSRF/Origin/logout vẫn hoạt động. Demo mặc định tắt trong config mẫu; public URL/proxy/Cloudflare/Cloud Run không dùng bypass. Không sửa schema hoặc dữ liệu nghiệp vụ. Kiểm tra10 auth tests PASS, frontend build PASS; browser local kiểm riêng arbitrary login/session/logout (xem kết quả lượt hiện hành). Những thay đổi automation/risk/OAuth khác trong workspace do công việc song song, không suy là đã nghiệm thu từ lượt auth này.
+
 ## Mini hackathon local — 14/11/2026
 
 Theo yêu cầu mới “chạy local trước, đúng AI_CUSTOMER_SUPPORT_REQUIREMENTS”, đã triển khai additive CR-001 bằng0006:7 bảng mới, tổng20 nghiệp vụ. Backup + restore thử + upgrade/repeat/drift trên clone rồi mới nâng local, fingerprint tất cả cột cũ của orders/complaints không đổi. Archive private: backend/.secrets/backups/before_ai_first_20261114T031226Z.dump. Không sửa schema_v1/backfill_v1/migration0001–0005.

@@ -11,28 +11,18 @@ import './workspace.css';
 const nav=[['overview','Tổng quan',LayoutDashboard],['inbox','Hộp thư',Inbox],['knowledge','Knowledge Base',BookOpen],['data','Dữ liệu & Tích hợp',Database],['settings','Cài đặt',SettingsIcon]] as const;
 export default function WorkspaceApp(){
  const [session,setSession]=useState<Session|null>(null),[checking,setChecking]=useState(true),[ever,setEver]=useState(false),[epoch,setEpoch]=useState(0);
- useEffect(()=>{
-   api<Session>('/auth/me')
-     .then(s=>{setCsrfToken(s.csrf_token);setSession(s);setEver(true);setChecking(false);})
-     .catch(()=>{
-       api<Session>('/auth/login','POST',{username:'admin',password:'A8Elv6qU9A07TYbl'})
-         .then(s=>{setCsrfToken(s.csrf_token);setSession(s);setEver(true);})
-         .catch(()=>{})
-         .finally(()=>setChecking(false));
-     });
-   const expired=()=>{setSession(null);setCsrfToken('');};
-   window.addEventListener('claimpilot:expired',expired);
-   return()=>window.removeEventListener('claimpilot:expired',expired);
- },[]);
+ useEffect(()=>{api<Session>('/auth/me').then(s=>{setCsrfToken(s.csrf_token);setSession(s);setEver(true);}).catch(()=>{}).finally(()=>setChecking(false));const expired=()=>{setSession(null);setCsrfToken('');};window.addEventListener('claimpilot:expired',expired);return()=>window.removeEventListener('claimpilot:expired',expired);},[]);
  function authenticated(s:Session){setCsrfToken(s.csrf_token);setSession(s);setEver(true);}
  async function logout(){await api<void>('/auth/logout','POST');setSession(null);setCsrfToken('');setEver(false);setEpoch(x=>x+1);}
  if(checking)return <div className="cp-start"><Sparkles/><p>Đang mở workspace của bạn…</p></div>;
  return <>{ever&&<div hidden={!session}><Workspace key={epoch} username={session?.username||''} logout={logout}/></div>}{!session&&<Login onLogin={authenticated} expired={ever}/>}</>;
 }
 function Login({onLogin,expired}:{onLogin:(s:Session)=>void;expired:boolean}){
- const [user,setUser]=useState('admin'),[password,setPassword]=useState('A8Elv6qU9A07TYbl'),[error,setError]=useState(''),[busy,setBusy]=useState(false);
+ const [user,setUser]=useState(''),[password,setPassword]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false);
+ const [demo,setDemo]=useState(false);
+ useEffect(()=>{let active=true;api<{demo_login:boolean}>('/auth/config').then(c=>{if(active)setDemo(c.demo_login);}).catch(()=>{});return()=>{active=false;};},[]);
  async function submit(e:React.FormEvent){e.preventDefault();setBusy(true);setError('');try{const s=await api<Session>('/auth/login','POST',{username:user,password});setPassword('');onLogin(s);}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
- return <div className="cp-login"><section className="cp-login-story"><a className="cp-brand" href="/"><span><Sparkles size={22}/></span>ClaimPilot</a><div><span className="cp-eyebrow">YOUR CUSTOMER SUPPORT COPILOT</span><h1>Chăm sóc tốt hơn.<br/><em>Từ mỗi cuộc trao đổi.</em></h1><p>Một workspace kết nối hội thoại, dữ liệu và tri thức — để bạn tập trung vào những quyết định cần con người.</p><div className="cp-login-points"><span>✧ AI có nguồn căn cứ</span><span>✓ Nhân viên kiểm soát</span><span>↗ Lịch sử minh bạch</span></div></div><small>ClaimPilot · AI-first Customer Support</small></section><section className="cp-login-form"><span className="cp-eyebrow">STAFF WORKSPACE</span><h2>{expired?'Đăng nhập lại':'Chào mừng trở lại'}</h2><p>{expired?'Phiên đã hết hạn. Đăng nhập để tiếp tục; hệ thống không tự gửi lại thao tác.':'Đăng nhập để tiếp tục xử lý và hỗ trợ khách hàng.'}</p><ErrorNotice message={error}/><form onSubmit={submit} className="cp-form"><label>Tên đăng nhập<input autoComplete="username" autoFocus value={user} onChange={e=>setUser(e.target.value)} required/></label><label>Mật khẩu<input type="password" autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} required/></label><button className="cp-primary" disabled={busy}>{busy?'Đang đăng nhập…':'Vào workspace →'}</button></form><div className="cp-login-safe"><ShieldCheck size={18}/> Dữ liệu khách hàng chỉ dành cho nhân viên đã đăng nhập.</div></section></div>;
+ return <div className="cp-login"><section className="cp-login-story"><a className="cp-brand" href="/"><span><Sparkles size={22}/></span>ClaimPilot</a><div><span className="cp-eyebrow">YOUR CUSTOMER SUPPORT COPILOT</span><h1>Chăm sóc tốt hơn.<br/><em>Từ mỗi cuộc trao đổi.</em></h1><p>Một workspace kết nối hội thoại, dữ liệu và tri thức — để bạn tập trung vào những quyết định cần con người.</p><div className="cp-login-points"><span>✧ AI có nguồn căn cứ</span><span>✓ Nhân viên kiểm soát</span><span>↗ Lịch sử minh bạch</span></div></div><small>ClaimPilot · AI-first Customer Support</small></section><section className="cp-login-form"><span className="cp-eyebrow">STAFF WORKSPACE</span><h2>{expired?'Đăng nhập lại':'Chào mừng trở lại'}</h2><p>{expired?'Phiên đã hết hạn. Đăng nhập để tiếp tục; hệ thống không tự gửi lại thao tác.':'Đăng nhập để tiếp tục xử lý và hỗ trợ khách hàng.'}</p><ErrorNotice message={error}/>{demo&&<div className="cp-notice" role="status">Đăng nhập demo local: nhập tài khoản và mật khẩu bất kỳ để vào workspace.</div>}<form onSubmit={submit} className="cp-form"><label>Tên đăng nhập<input autoComplete="username" autoFocus maxLength={100} placeholder={demo?"Tên bất kỳ, ví dụ: demo":"Tên đăng nhập"} value={user} onChange={e=>setUser(e.target.value)} required/></label><label>Mật khẩu<input type="password" autoComplete="current-password" maxLength={256} placeholder={demo?"Nhập bất kỳ":"Mật khẩu"} value={password} onChange={e=>setPassword(e.target.value)} required/></label><button className="cp-primary" disabled={busy}>{busy?'Đang đăng nhập…':'Vào workspace →'}</button></form><div className="cp-login-safe"><ShieldCheck size={18}/> Dữ liệu khách hàng chỉ dành cho nhân viên đã đăng nhập.</div></section></div>;
 }
 function Workspace({username,logout}:{username:string;logout:()=>Promise<void>}){
  const first=new URLSearchParams(location.search).get('tab')||'overview';

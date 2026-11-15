@@ -7,6 +7,7 @@
 4. [TESTING](docs/TESTING_GUIDELINES.md), test đúng role, [SECURITY](docs/SECURITY.md), [ERROR_HANDLING](docs/ERROR_HANDLING.md), [IMPLEMENTATION_REPORT](IMPLEMENTATION_REPORT.md).
 
 ## Phạm vi và nguồn sự thật
+- Yêu cầu mới: bật đăng nhập demo cho LOCAL bằng LOCAL_DEMO_LOGIN=true, chấp nhận credentials bất kỳ không rỗng trên loopback trực tiếp; vẫn session/CSRF/logout. Flag mặc định false, không bypass Cloud Run/public/proxy. Không hardcode credentials staff trong frontend.
 - Cập nhật yêu cầu sau đợt docs: người dùng đã giao triển khai/chạy mini hackathon LOCAL theo requirements. CR-001 đã được triển khai local bằng0006 sau backup/clone verification,20 bảng; các đoạn docs-only/PENDING_REVIEW bên dưới ghi lịch sử đợt trước, không chặn công việc local được giao. Chưa có review độc lập A/B/C hoặc nghiệm thu cloud, không tự coi quyền local là quyền deploy/send thật.
 - Đợt hiện tại người dùng giao đồng bộ Markdown theo file requirements; chỉ sửa docs. Không feature code/migration/cloud/send/Git mutations. File nguồn là tài liệu người dùng cung cấp, giữ nguyên trạng thái và nội dung; các chi tiết dẫn xuất là đề xuất để review.
 - Yêu cầu sản phẩm là đích:5 mục workspace,6 vai trò AI, KB có duyệt/version/citations, business/agent settings, human decision/confirmed send. Code hiện có là CURRENT, phải giữ dữ liệu/công việc khi mở rộng.

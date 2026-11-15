@@ -2,8 +2,11 @@
 import hashlib
 import hmac
 import json
+import os
 import secrets
 import time
+from ipaddress import ip_address
+from urllib.parse import urlsplit
 from collections import defaultdict, deque
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -54,6 +57,19 @@ class Login(BaseModel):
     username:str=Field(min_length=1,max_length=100)
     password:str=Field(min_length=1,max_length=256)
 
+def demo_login_enabled(request:Request):
+    if not settings.local_demo_login or os.environ.get('K_SERVICE') or os.environ.get('CLOUD_RUN_JOB'):return False
+    local_hosts={'localhost','127.0.0.1','::1'}
+    base=urlsplit(settings.public_base_url)
+    if base.scheme!='http' or base.hostname not in local_hosts or request.url.hostname not in local_hosts:return False
+    if any(header in request.headers for header in ('forwarded','x-forwarded-for','x-forwarded-host','cf-connecting-ip','cf-ray')):return False
+    try:return bool(request.client and ip_address(request.client.host).is_loopback)
+    except ValueError:return False
+
+@router.get('/config')
+def login_config(request:Request):
+    return {'demo_login':demo_login_enabled(request)}
+
 @router.post('/login')
 def login(data:Login,request:Request,response:Response,db:Session=Depends(get_db)):
     check_origin(request)
@@ -62,15 +78,19 @@ def login(data:Login,request:Request,response:Response,db:Session=Depends(get_db
         q=attempts[ip]
         while q and q[0]<time.monotonic()-900:q.popleft()
         if len(q)>=5:fail(429,'login_rate_limited')
-    config=credentials()
-    try:valid=hasher.verify(config['password_hash'],data.password) and hmac.compare_digest(config['username'],data.username)
-    except (VerificationError,InvalidHashError):valid=False
+    demo=demo_login_enabled(request)
+    if demo:
+        valid=True;staff_id=data.username
+    else:
+        config=credentials();staff_id=config['username']
+        try:valid=hasher.verify(config['password_hash'],data.password) and hmac.compare_digest(config['username'].encode(),data.username.encode())
+        except (VerificationError,InvalidHashError):valid=False
     if not valid:
         with attempt_lock:attempts[ip].append(time.monotonic())
         fail(401,'invalid_credentials')
     token=secrets.token_urlsafe(32)
     issued=now()
-    s=StaffSession(token_hash=digest(token),csrf_hash=digest(digest('csrf:'+token)),staff_id=config['username'],created_at=issued,expires_at=issued+timedelta(hours=8))
+    s=StaffSession(token_hash=digest(token),csrf_hash=digest(digest('csrf:'+token)),staff_id=staff_id,created_at=issued,expires_at=issued+timedelta(hours=8))
     db.add(s);db.commit()
     response.set_cookie('cp_session',token,max_age=28800,httponly=True,secure=settings.session_cookie_secure,samesite='lax',path='/')
     return session_response(s,token)

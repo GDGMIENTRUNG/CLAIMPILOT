@@ -2,7 +2,7 @@
 
 ## Bản mini hackathon local đang triển khai
 
-Mở **http://localhost:8080**. Tài khoản local: admin; mật khẩu sinh riêng nằm trong backend/.secrets/local-access.json (quyền0600, không Git). Vào **Cài đặt** để nhập tên doanh nghiệp/ngôn ngữ/giọng điệu thực, rồi thêm tri thức và Gửi duyệt → Duyệt & xuất bản. Không seed thương hiệu/tri thức đã duyệt giả.
+Mở **http://localhost:8080**. Theo yêu cầu mới, máy local bật `LOCAL_DEMO_LOGIN=true`: nhập tài khoản và mật khẩu bất kỳ (không để trống) để vào workspace. Demo vẫn tạo session, kiểm CSRF/Origin và hỗ trợ logout. Flag mặc định false, chỉ có hiệu lực với URL HTTP/loopback trực tiếp; Cloud Run, URL public và request qua proxy/Cloudflare dùng đăng nhập thật. Tắt flag để dùng tài khoản staff trong backend/.secrets/local-access.json (quyền0600, không Git). Vào **Cài đặt** để nhập tên doanh nghiệp/ngôn ngữ/giọng điệu thực, rồi thêm tri thức và Gửi duyệt → Duyệt & xuất bản. Không seed thương hiệu/tri thức đã duyệt giả.
 
 Mở lại từ repo root: `bash scripts/start-local.sh`. Launcher bật PostgreSQL, chỉ khi cần mới chạy backup/clone verification/migration, tạo tài khoản nếu chưa có, build React và chạy FastAPI cùng origin8080. Không chạy launcher thứ hai khi port8080 đang có server. Ctrl+C tắt server; PostgreSQL vẫn giữ dữ liệu.
 

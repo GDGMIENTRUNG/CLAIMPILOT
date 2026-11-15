@@ -14,6 +14,8 @@ Phân công hiện hành v3: A fullstack workspace/auth/platform và shared cred
 
 Một staff username/password hash từ Secrets, dùng thư viện hash chuẩn (Argon2id), không plaintext/hardcode. Session token >=32 byte random, hash SHA256 trong DB, TTL 8h, logout revoke; CSRF theo API_SPECIFICATION. Cookie HttpOnly/Secure cloud/SameSite=Lax; Origin kiểm tra login và mutation. Không localStorage session.
 
+Ngoại lệ demo local do người dùng yêu cầu: `LOCAL_DEMO_LOGIN=true` chấp nhận username/password bất kỳ không rỗng khi URL cấu hình và request đều là HTTP loopback trực tiếp. `GET /api/auth/config` trả `demo_login` để UI hiển thị đúng chế độ. Cloud Run, public URL, client không loopback hoặc forwarded/Cloudflare headers không bật demo. Flag mặc định false; session/CSRF/Origin/logout vẫn áp dụng. Không nhúng mật khẩu staff vào frontend hoặc tự login bằng credentials hardcode.
+
 Login limit 5 failed/15 phút/IP trong single-instance MVP; dùng peer IP đáng tin từ hạ tầng, không tin X-Forwarded-For tùy ý; ghi rõ chưa distributed production limiter. Một staff account chỉ truy vết identity cấu hình, chưa phân biệt nhiều nhân viên.
 
 ## Gmail và quyền dữ liệu

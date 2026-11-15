@@ -25,6 +25,7 @@ def web(db,tmp_path,monkeypatch):
     file=tmp_path/'staff.json'
     file.write_text(json.dumps({'username':'tester','password_hash':security.hasher.hash(password),'preview_key':'test-only-preview-secret'}))
     monkeypatch.setattr(settings,'local_credentials_path',str(file));monkeypatch.setattr(settings,'public_base_url',ORIGIN)
+    monkeypatch.setattr(settings,'local_demo_login',False)
     security.attempts.clear()
     app.dependency_overrides[get_db]=lambda:db
     with TestClient(app) as client:
@@ -83,6 +84,45 @@ def test_login_rate_limit_untrusted_origin(web):
         assert client.post('/api/auth/login',headers={'Origin':'https://evil.test'},json={'username':'tester','password':'wrong'}).status_code==403
         for _ in range(5):assert client.post('/api/auth/login',headers={'Origin':ORIGIN},json={'username':'tester','password':'wrong'}).status_code==401
         assert client.post('/api/auth/login',headers={'Origin':ORIGIN},json={'username':'tester','password':'wrong'}).status_code==429
+
+def test_local_demo_accepts_arbitrary_credentials_keeps_session_csrf(web,monkeypatch):
+    monkeypatch.setattr(settings,'local_demo_login',True)
+    monkeypatch.delenv('K_SERVICE',raising=False);monkeypatch.delenv('CLOUD_RUN_JOB',raising=False)
+    with TestClient(app,base_url=ORIGIN,client=('127.0.0.1',50100)) as client:
+        client.headers['Origin']=ORIGIN
+        assert client.get('/api/auth/config').json()=={'demo_login':True}
+        assert client.get('/api/orders').status_code==401
+        result=client.post('/api/auth/login',json={'username':'Nhân viên demo','password':'anything-123'})
+        assert result.status_code==200,result.text
+        assert result.json()['username']=='Nhân viên demo' and result.json()['csrf_token']
+        assert 'httponly' in result.headers['set-cookie'].lower()
+        assert client.get('/api/auth/me').json()['username']=='Nhân viên demo'
+        assert client.get('/api/orders').status_code==200
+        assert client.post('/api/auth/logout').status_code==403
+        client.headers['X-CSRF-Token']=result.json()['csrf_token']
+        assert client.post('/api/auth/logout').status_code==204
+        assert client.get('/api/auth/me').status_code==401
+
+@pytest.mark.parametrize('variant',['disabled','cloud','public_url','remote_client','forwarded','cloudflare'])
+def test_demo_login_is_confined_to_explicit_local_mode(web,monkeypatch,variant):
+    monkeypatch.setattr(settings,'local_demo_login',variant!='disabled')
+    monkeypatch.delenv('K_SERVICE',raising=False);monkeypatch.delenv('CLOUD_RUN_JOB',raising=False)
+    if variant=='cloud':monkeypatch.setenv('K_SERVICE','synthetic-cloud-service')
+    origin='https://workspace.example.test' if variant=='public_url' else ORIGIN
+    monkeypatch.setattr(settings,'public_base_url',origin)
+    host='203.0.113.25' if variant=='remote_client' else '127.0.0.1'
+    with TestClient(app,base_url=origin,client=(host,50100)) as client:
+        client.headers['Origin']=origin
+        if variant=='forwarded':client.headers['X-Forwarded-For']='127.0.0.1'
+        if variant=='cloudflare':client.headers['CF-Ray']='synthetic-proxy-request'
+        assert client.get('/api/auth/config').json()=={'demo_login':False}
+        assert client.post('/api/auth/login',json={'username':'arbitrary','password':'arbitrary'}).status_code==401
+
+def test_demo_login_still_rejects_untrusted_origin(web,monkeypatch):
+    monkeypatch.setattr(settings,'local_demo_login',True)
+    with TestClient(app,base_url=ORIGIN,client=('127.0.0.1',50100)) as client:
+        r=client.post('/api/auth/login',headers={'Origin':'https://evil.example.test'},json={'username':'demo','password':'demo'})
+        assert r.status_code==403
 
 def test_settings_revision_validation_and_guardrails(web,db):
     cfg=setup_business(web)

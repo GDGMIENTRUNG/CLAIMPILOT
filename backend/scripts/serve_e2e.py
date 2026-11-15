@@ -35,6 +35,7 @@ def main():
         settings.public_base_url='http://127.0.0.1:8082'
         settings.frontend_origin=settings.public_base_url
         settings.session_cookie_secure=False
+        settings.local_demo_login=False
         settings.gemini_api_key='';settings.groq_api_key=''
         settings.google_client_id='';settings.google_client_secret=''
         settings.gmail_token_path=str(private_path/'absent-gmail-token.json')

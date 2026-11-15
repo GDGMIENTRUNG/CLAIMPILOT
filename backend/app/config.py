@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     session_cookie_secure: bool = False
     local_credentials_path: str = ".secrets/local-access.json"
     enable_gmail_write: bool = False
+    local_demo_login: bool = False
     @property
     def token_path(self):
         p = Path(self.gmail_token_path)
